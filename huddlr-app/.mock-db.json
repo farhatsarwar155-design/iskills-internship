@@ -1,0 +1,54 @@
+{
+  "users": {
+    "testuser@example.com": {
+      "name": "Test User",
+      "email": "testuser@example.com",
+      "password": "$2b$10$WGrpiNaCZ1ahSQAwZm9BwOQetcQ.5nq9yZswJt.9QqT0X.GzLKYky",
+      "createdAt": 1784617246257
+    },
+    "testuser-1784617318893@example.com": {
+      "name": "Test User",
+      "email": "testuser-1784617318893@example.com",
+      "password": "$2b$10$0MLGn9RotXaLMqRQI67NnunU6biesQmU.nDA6Cd4MbQRO1h1YfnTi",
+      "createdAt": 1784617320563
+    },
+    "testuser-1784617399559@example.com": {
+      "name": "Test User",
+      "email": "testuser-1784617399559@example.com",
+      "password": "$2b$10$u2B2I9pQoMiy/YZ/lVP13uT/Lg5PC9Yrrdg0TRuxTbImqjKFn6OLm",
+      "createdAt": 1784617402702
+    }
+  },
+  "otps": {},
+  "teams": [
+    {
+      "id": "ajjjd5dz3",
+      "name": "Beta Testers",
+      "owner": "testuser-1784617318893@example.com",
+      "members": [
+        "testuser-1784617318893@example.com"
+      ],
+      "createdAt": 1784617328699
+    },
+    {
+      "id": "c7fe3kiqi",
+      "name": "Beta Testers",
+      "owner": "testuser-1784617399559@example.com",
+      "members": [
+        "testuser-1784617399559@example.com",
+        "collaborator@example.com"
+      ],
+      "createdAt": 1784617410421
+    }
+  ],
+  "messages": [
+    {
+      "id": "jfa7lx6po",
+      "teamId": "c7fe3kiqi",
+      "text": "Hello team, welcome to Huddlr!",
+      "senderName": "Test User",
+      "senderEmail": "testuser-1784617399559@example.com",
+      "timestamp": 1784617415595
+    }
+  ]
+}
