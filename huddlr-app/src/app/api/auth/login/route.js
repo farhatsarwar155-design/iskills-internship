@@ -20,6 +20,11 @@ export async function POST(request) {
 
     const userData = userDocSnap.data();
 
+    // Check if user is banned
+    if (userData.isBanned) {
+      return NextResponse.json({ error: "Your account has been suspended" }, { status: 403 });
+    }
+
     // Verify password
     const isMatch = await comparePassword(password, userData.password);
     if (!isMatch) {
@@ -29,7 +34,8 @@ export async function POST(request) {
     // Sign JWT session token
     const token = await signJWT({
       name: userData.name,
-      email: userData.email
+      email: userData.email,
+      role: userData.role || "member"
     });
 
     const cookieStore = await cookies();

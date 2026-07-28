@@ -37,6 +37,7 @@ export async function POST(request) {
       name: otpData.name,
       email: otpData.email,
       password: otpData.hashedPassword,
+      role: otpData.role || "member",
       createdAt: Date.now()
     });
 
@@ -46,7 +47,8 @@ export async function POST(request) {
     // Sign JWT session token
     const token = await signJWT({
       name: otpData.name,
-      email: otpData.email
+      email: otpData.email,
+      role: otpData.role || "member"
     });
 
     const cookieStore = await cookies();

@@ -10,25 +10,45 @@ export async function middleware(request) {
   const { pathname } = request.nextUrl;
 
   let isValid = false;
+  let payload = null;
   if (token) {
     try {
-      await jwtVerify(token, JWT_SECRET);
+      const result = await jwtVerify(token, JWT_SECRET);
+      payload = result.payload;
       isValid = true;
     } catch (err) {
       isValid = false;
     }
   }
 
-  const isAuthPage = pathname.startsWith("/login") || pathname.startsWith("/register") || pathname.startsWith("/verify-otp");
-  const isDashboardPage = pathname.startsWith("/dashboard");
+  // Allow /admin/register to be publicly accessible (must check BEFORE admin block below)
+  if (pathname === "/admin/register" || pathname.startsWith("/admin/register/")) {
+    return NextResponse.next();
+  }
 
-  if (isDashboardPage && !isValid) {
+  // Strictly protect ALL /admin routes (including bare /admin):
+  // Non-authenticated → /login, authenticated non-admin → /dashboard
+  if (pathname === "/admin" || pathname.startsWith("/admin/")) {
+    if (!isValid) {
+      const url = new URL("/login", request.url);
+      return NextResponse.redirect(url);
+    }
+    if (payload?.role !== "admin") {
+      const url = new URL("/dashboard", request.url);
+      return NextResponse.redirect(url);
+    }
+  }
+
+  const isAuthPage = pathname.startsWith("/login") || pathname.startsWith("/register") || pathname.startsWith("/verify-otp");
+  const isProtectedPage = pathname.startsWith("/dashboard") || pathname.startsWith("/meetings");
+
+  if (isProtectedPage && !isValid) {
     const url = new URL("/login", request.url);
     return NextResponse.redirect(url);
   }
 
   if (isAuthPage && isValid) {
-    const url = new URL("/dashboard", request.url);
+    const url = new URL(payload?.role === "admin" ? "/admin" : "/dashboard", request.url);
     return NextResponse.redirect(url);
   }
 
@@ -36,5 +56,6 @@ export async function middleware(request) {
 }
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/login", "/register", "/verify-otp"]
+  // "/admin" must be listed explicitly because "/admin/:path*" only matches /admin/something, not /admin itself
+  matcher: ["/dashboard/:path*", "/admin", "/admin/:path*", "/meetings/:path*", "/login", "/register", "/verify-otp"]
 };

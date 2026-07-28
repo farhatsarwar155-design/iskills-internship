@@ -7,6 +7,7 @@ import {
   getDocs as realGetDocs,
   setDoc as realSetDoc,
   addDoc as realAddDoc,
+  updateDoc as realUpdateDoc,
   deleteDoc as realDeleteDoc,
   query as realQuery,
   where as realWhere,
@@ -59,8 +60,11 @@ class MockDoc {
 }
 
 class MockQuerySnapshot {
-  constructor(docs) {
-    this.docs = docs;
+  constructor(docs = []) {
+    this.docs = docs || [];
+  }
+  get size() {
+    return this.docs.length;
   }
   forEach(callback) {
     this.docs.forEach(callback);
@@ -198,6 +202,36 @@ export async function addDoc(collectionRef, dataContent) {
   return realAddDoc(collectionRef, dataContent);
 }
 
+export async function updateDoc(docRef, dataContent) {
+  if (isMock) {
+    if (isServer) {
+      const data = getMockDbData();
+      const col = docRef.collectionName;
+      const id = docRef.id;
+      if (data[col]) {
+        if (Array.isArray(data[col])) {
+          const idx = data[col].findIndex(item => item.id === id);
+          if (idx !== -1) {
+            data[col][idx] = { ...data[col][idx], ...dataContent };
+          }
+        } else if (data[col][id]) {
+          data[col][id] = { ...data[col][id], ...dataContent };
+        }
+        saveMockDbData(data);
+      }
+      return;
+    } else {
+      await fetch(`/api/mock/db`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "updateDoc", collection: docRef.collectionName, id: docRef.id, data: dataContent })
+      });
+      return;
+    }
+  }
+  return realUpdateDoc(docRef, dataContent);
+}
+
 export async function deleteDoc(docRef) {
   if (isMock) {
     if (isServer) {
@@ -286,11 +320,33 @@ export async function getDocs(queryRef) {
 
 export function onSnapshot(queryRef, callback) {
   if (isMock) {
+    if (queryRef.type === "doc") {
+      const colName = queryRef.collectionName;
+      const docId = queryRef.id;
+      let intervalId;
+      const poll = async () => {
+        try {
+          const res = await fetch(`/api/mock/db?collection=${colName}&id=${docId}`);
+          if (res.ok) {
+            const body = await res.json();
+            callback(new MockDoc(docId, body.exists, body.data));
+          }
+        } catch (err) {
+          console.error("Error polling mock database for doc:", err);
+        }
+      };
+      poll();
+      intervalId = setInterval(poll, 1000);
+      return () => clearInterval(intervalId);
+    }
+
     const colName = queryRef.collectionName || queryRef.name;
     let constraints = queryRef.constraints || [];
     
     const teamIdConstraint = constraints.find(c => c.field === "teamId" && c.op === "==");
     const teamId = teamIdConstraint ? teamIdConstraint.value : null;
+    const userEmailConstraint = constraints.find(c => c.field === "userEmail" && c.op === "==");
+    const userEmail = userEmailConstraint ? userEmailConstraint.value : null;
 
     let intervalId;
     const poll = async () => {
@@ -298,6 +354,9 @@ export function onSnapshot(queryRef, callback) {
         let url = `/api/mock/db?collection=${colName}`;
         if (teamId) {
           url += `&teamId=${teamId}`;
+        }
+        if (userEmail) {
+          url += `&userEmail=${encodeURIComponent(userEmail)}`;
         }
         const res = await fetch(url);
         if (res.ok) {
@@ -327,3 +386,4 @@ export function onSnapshot(queryRef, callback) {
   }
   return realOnSnapshot(queryRef, callback);
 }
+

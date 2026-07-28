@@ -32,7 +32,11 @@ export default function Register() {
         throw new Error(data.error || "Something went wrong");
       }
 
-      router.push(`/verify-otp?email=${encodeURIComponent(formData.email)}`);
+      if (data.devOtp) {
+        router.push(`/verify-otp?email=${encodeURIComponent(formData.email)}&devOtp=${data.devOtp}`);
+      } else {
+        router.push(`/verify-otp?email=${encodeURIComponent(formData.email)}`);
+      }
     } catch (err) {
       setError(err.message);
     } finally {

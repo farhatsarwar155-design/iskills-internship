@@ -14,7 +14,6 @@ function VerifyOtpContent() {
   const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
   const [timeLeft, setTimeLeft] = useState(600); // 10 minutes
-  const [devOtp, setDevOtp] = useState("");
 
   useEffect(() => {
     if (timeLeft <= 0) return;
@@ -24,29 +23,12 @@ function VerifyOtpContent() {
     return () => clearInterval(interval);
   }, [timeLeft]);
 
-  useEffect(() => {
-    if (!email) return;
-    const fetchDevOtp = async () => {
-      try {
-        const res = await fetch(`/api/mock/otp?email=${encodeURIComponent(email)}`);
-        if (res.ok) {
-          const data = await res.json();
-          if (data.otp) {
-            setDevOtp(data.otp);
-          }
-        }
-      } catch (err) {
-        // Silently ignore
-      }
-    };
-    fetchDevOtp();
-  }, [email]);
-
   const formatTime = (seconds) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins}:${secs < 10 ? "0" : ""}${secs}`;
   };
+  const devOtp = searchParams.get("devOtp");
 
   const handleAutofill = () => {
     if (devOtp) {
@@ -108,9 +90,9 @@ function VerifyOtpContent() {
         <div 
           onClick={handleAutofill}
           id="dev-otp-helper"
-          className="p-3 mb-6 bg-indigo-950/40 hover:bg-indigo-900/40 border border-indigo-700/50 rounded-xl text-indigo-300 text-xs text-center cursor-pointer hover:scale-[1.02] transition-all flex flex-col items-center gap-1 shadow-md shadow-indigo-950/20"
+          className="p-3 mb-6 bg-amber-950/40 hover:bg-amber-900/40 border border-amber-700/50 rounded-xl text-amber-300 text-xs text-center cursor-pointer hover:scale-[1.02] transition-all flex flex-col items-center gap-1 shadow-md shadow-amber-950/20"
         >
-          <span className="font-bold uppercase tracking-wider text-[10px] text-indigo-400">Dev Helper</span>
+          <span className="font-bold uppercase tracking-wider text-[10px] text-amber-400">Dev Mode - Email not sent, use this code</span>
           <span>Click to autofill OTP: <span className="font-mono font-bold text-sm tracking-widest text-white ml-1">{devOtp}</span></span>
         </div>
       )}
@@ -135,9 +117,6 @@ function VerifyOtpContent() {
             <label className="block text-xs font-semibold text-zinc-400 uppercase tracking-wider" htmlFor="otp">
               Verification Code
             </label>
-            <span className={`text-xs font-mono font-semibold ${timeLeft < 60 ? "text-rose-400 animate-pulse" : "text-zinc-500"}`}>
-              {timeLeft > 0 ? `Expires in ${formatTime(timeLeft)}` : "Code expired"}
-            </span>
           </div>
           <input
             id="otp"

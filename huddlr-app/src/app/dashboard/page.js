@@ -19,18 +19,42 @@ import {
   Bell,
   CheckCircle,
   Clock,
-  Briefcase
+  Briefcase,
+  Mic,
+  Crown,
+  Calendar,
+  Shield
 } from "lucide-react";
+import Link from "next/link";
 import { db, collection, addDoc, query, where, orderBy, onSnapshot } from "@/lib/firebase";
+import TasksTab from "@/components/dashboard/TasksTab";
+import MeetingsTab from "@/components/dashboard/MeetingsTab";
+import NotificationsDropdown from "@/components/dashboard/NotificationsDropdown";
+import VoiceNotesTab from "@/components/dashboard/VoiceNotesTab";
+import DocumentsTab from "@/components/dashboard/DocumentsTab";
+import SettingsTab from "@/components/dashboard/SettingsTab";
+import ManageTeamModal from "@/components/dashboard/ManageTeamModal";
 
 export default function Dashboard() {
   const router = useRouter();
   
   // Navigation & User State
   const [activeTab, setActiveTab] = useState("dashboard");
+  const [meetingsSubmenuOpen, setMeetingsSubmenuOpen] = useState(true);
   const [currentUser, setCurrentUser] = useState(null);
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
   const [loadingUser, setLoadingUser] = useState(true);
+
+  // Sync tab from URL query param if present
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const urlParams = new URLSearchParams(window.location.search);
+      const tabParam = urlParams.get("tab");
+      if (tabParam) {
+        setActiveTab(tabParam);
+      }
+    }
+  }, []);
 
   // Teams & Chat State
   const [teams, setTeams] = useState([]);
@@ -41,11 +65,13 @@ export default function Dashboard() {
   const [showCreateTeamModal, setShowCreateTeamModal] = useState(false);
   const [inviteEmail, setInviteEmail] = useState("");
   const [showInviteModal, setShowInviteModal] = useState(false);
+  const [showManageTeamModal, setShowManageTeamModal] = useState(false);
   const [inviteError, setInviteError] = useState("");
   const [inviteSuccess, setInviteSuccess] = useState("");
   const [createTeamError, setCreateTeamError] = useState("");
 
   const messagesEndRef = useRef(null);
+  const myMeetingsRef = useRef([]);
 
   // Load user details
   useEffect(() => {
@@ -88,6 +114,18 @@ export default function Dashboard() {
     fetchTeams();
   }, [currentUser]);
 
+  // Apply theme when user preference changes
+  useEffect(() => {
+    if (currentUser?.theme) {
+      const htmlEl = document.documentElement;
+      if (currentUser.theme === "light") {
+        htmlEl.classList.add("light");
+      } else {
+        htmlEl.classList.remove("light");
+      }
+    }
+  }, [currentUser?.theme]);
+
   // Listen to messages for the selected team
   useEffect(() => {
     if (!selectedTeam) {
@@ -120,9 +158,84 @@ export default function Dashboard() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
+  // Load upcoming meetings for reminders
+  useEffect(() => {
+    if (!currentUser) return;
+    const unsubscribe = onSnapshot(collection(db, "meetings"), (snapshot) => {
+      const myM = [];
+      snapshot.forEach(docSnap => {
+        const data = docSnap.data();
+        if (data.participants?.includes(currentUser.email) || data.hostId === currentUser.email) {
+          myM.push({ id: docSnap.id, ...data });
+        }
+      });
+      myMeetingsRef.current = myM;
+    });
+    return () => unsubscribe();
+  }, [currentUser]);
+
+  // Check for meetings starting soon (15 mins)
+  useEffect(() => {
+    if (!currentUser) return;
+    const checkReminders = () => {
+      const now = new Date();
+      myMeetingsRef.current.forEach(m => {
+        if (m.status === "scheduled" && m.date && m.time) {
+          const meetingTime = new Date(`${m.date}T${m.time}`);
+          const diffMs = meetingTime.getTime() - now.getTime();
+          const diffMins = Math.floor(diffMs / 60000);
+          
+          if (diffMins === 15 || diffMins === 14) {
+            const notifKey = `reminder_${m.id}`;
+            if (!localStorage.getItem(notifKey)) {
+              localStorage.setItem(notifKey, "true");
+              addDoc(collection(db, "notifications"), {
+                userEmail: currentUser.email,
+                type: "meeting",
+                title: "Meeting Starting Soon",
+                message: `Your meeting "${m.title}" is starting in 15 minutes.`,
+                read: false,
+                timestamp: Date.now(),
+                linkId: m.id
+              }).catch(err => console.error(err));
+            }
+          }
+        }
+      });
+    };
+    
+    checkReminders();
+    const intervalId = setInterval(checkReminders, 60000);
+    return () => clearInterval(intervalId);
+  }, [currentUser]);
+
+  const handleUserUpdate = (updatedFields) => {
+    setCurrentUser(prev => ({ ...prev, ...updatedFields }));
+  };
+
+  const handleTeamUpdate = (updatedTeam) => {
+    setSelectedTeam(updatedTeam);
+    setTeams(prevTeams => prevTeams.map(t => t.id === updatedTeam.id ? updatedTeam : t));
+  };
+
+  const handleLeaveTeam = (teamId) => {
+    const updatedTeams = teams.filter(t => t.id !== teamId);
+    setTeams(updatedTeams);
+    if (updatedTeams.length > 0) {
+      setSelectedTeam(updatedTeams[0]);
+    } else {
+      setSelectedTeam(null);
+    }
+  };
+
   const handleLogout = async () => {
-    await fetch("/api/auth/logout", { method: "POST" });
-    router.push("/login");
+    try {
+      await fetch("/api/auth/logout", { method: "POST" });
+    } catch (err) {
+      console.error("Logout failed", err);
+    } finally {
+      window.location.href = "/login";
+    }
   };
 
   const handleCreateTeam = async (e) => {
@@ -201,6 +314,24 @@ export default function Dashboard() {
         senderEmail: currentUser.email,
         timestamp: Date.now()
       });
+      
+      // Create chat notification for all other team members
+      if (selectedTeam.members) {
+        for (const member of selectedTeam.members) {
+          if (member !== currentUser.email) {
+            await addDoc(collection(db, "notifications"), {
+              userEmail: member,
+              type: "chat",
+              title: `New Message in ${selectedTeam.name}`,
+              message: `${currentUser.name || currentUser.email}: ${messageInput.trim()}`,
+              read: false,
+              timestamp: Date.now(),
+              linkId: selectedTeam.id
+            });
+          }
+        }
+      }
+
       setMessageInput("");
     } catch (err) {
       console.error("Failed to send message", err);
@@ -236,36 +367,118 @@ export default function Dashboard() {
         </div>
 
         {/* Navigation list */}
-        <nav className="flex-1 p-4 space-y-1">
-          {[
-            { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
-            { id: "chat", label: "Team Chat", icon: MessageSquare },
-            { id: "meetings", label: "Meetings", icon: Video },
-            { id: "tasks", label: "Tasks", icon: CheckSquare },
-            { id: "documents", label: "Documents", icon: FileText },
-            { id: "settings", label: "Settings", icon: SettingsIcon },
-          ].map((item) => {
-            const Icon = item.icon;
-            const isActive = activeTab === item.id;
-            return (
-              <button
-                key={item.id}
-                onClick={() => setActiveTab(item.id)}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 cursor-pointer ${
-                  isActive 
-                    ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/10" 
-                    : "text-zinc-400 hover:bg-zinc-800 hover:text-white"
-                }`}
-              >
-                <Icon size={18} />
-                <span>{item.label}</span>
-              </button>
-            );
-          })}
+        <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
+          {(() => {
+            const navItems = [
+              { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
+              { id: "chat", label: "Team Chat", icon: MessageSquare },
+              { 
+                id: "meetings", 
+                label: "Meetings", 
+                icon: Video,
+                subItems: [
+                  { id: "meetings", label: "All & Calendar", icon: Calendar },
+                  { id: "meetings-created", label: "Meetings I Created", icon: Crown },
+                  { id: "meetings-joining", label: "Meetings to Join", icon: Users }
+                ]
+              },
+              { id: "tasks", label: "Tasks", icon: CheckSquare },
+              { id: "voice-notes", label: "Voice Notes", icon: Mic },
+              { id: "documents", label: "Documents", icon: FileText },
+              { id: "settings", label: "Settings", icon: SettingsIcon },
+            ];
+
+            if (currentUser?.role === "admin") {
+              navItems.push({ id: "admin", label: "Admin Panel", icon: Shield, isExternal: true, href: "/admin" });
+            }
+
+            return navItems.map((item) => {
+              const Icon = item.icon;
+              const isSubActive = item.subItems?.some(sub => activeTab === sub.id);
+              const isActive = activeTab === item.id || isSubActive;
+
+              if (item.isExternal) {
+                return (
+                  <Link
+                    key={item.id}
+                    href={item.href}
+                    className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-205 text-zinc-400 hover:bg-zinc-800 hover:text-white"
+                  >
+                    <Icon size={18} className="text-indigo-400" />
+                    <span>{item.label}</span>
+                  </Link>
+                );
+              }
+
+              if (item.subItems) {
+                return (
+                  <div key={item.id} className="space-y-1">
+                    <button
+                      onClick={() => {
+                        setMeetingsSubmenuOpen(!meetingsSubmenuOpen);
+                        if (activeTab !== "meetings" && !isSubActive) {
+                          setActiveTab("meetings");
+                        }
+                      }}
+                      className={`w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 cursor-pointer ${
+                        isActive 
+                          ? "bg-indigo-600/20 text-indigo-300 border border-indigo-500/30" 
+                          : "text-zinc-400 hover:bg-zinc-800 hover:text-white"
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <Icon size={18} />
+                        <span>{item.label}</span>
+                      </div>
+                      <ChevronDown size={14} className={`transition-transform duration-200 ${meetingsSubmenuOpen ? "rotate-180" : ""}`} />
+                    </button>
+
+                    {meetingsSubmenuOpen && (
+                      <div className="pl-4 space-y-1">
+                        {item.subItems.map(sub => {
+                          const SubIcon = sub.icon;
+                          const isThisSubActive = activeTab === sub.id;
+                          return (
+                            <button
+                              key={sub.id}
+                              onClick={() => setActiveTab(sub.id)}
+                              className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                                isThisSubActive
+                                  ? "bg-indigo-600 text-white shadow-sm shadow-indigo-600/20"
+                                  : "text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200"
+                              }`}
+                            >
+                              <SubIcon size={14} />
+                              <span className="truncate">{sub.label}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                );
+              }
+
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => setActiveTab(item.id)}
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 cursor-pointer ${
+                    isActive 
+                      ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/10" 
+                      : "text-zinc-400 hover:bg-zinc-800 hover:text-white"
+                  }`}
+                >
+                  <Icon size={18} />
+                  <span>{item.label}</span>
+                </button>
+              );
+            });
+          })()}
         </nav>
 
         {/* Footer (User info & Quick logout) */}
-        <div className="p-4 border-t border-zinc-800">
+        <div className="p-4 border-t border-zinc-800 flex flex-col gap-2">
           <button 
             onClick={handleLogout}
             className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-rose-400 hover:bg-rose-950/20 transition-all duration-200 cursor-pointer"
@@ -286,17 +499,19 @@ export default function Dashboard() {
 
           {/* User Controls */}
           <div className="flex items-center gap-4">
-            <button className="text-zinc-400 hover:text-white transition-all cursor-pointer">
-              <Bell size={20} />
-            </button>
+            <NotificationsDropdown currentUser={currentUser} />
             <div className="relative">
               <button 
                 onClick={() => setShowProfileDropdown(!showProfileDropdown)}
                 className="flex items-center gap-2 hover:bg-zinc-800 px-3 py-1.5 rounded-xl transition-all cursor-pointer"
                 id="profile-dropdown-btn"
               >
-                <div className="w-8 h-8 rounded-full bg-indigo-600/30 border border-indigo-500/50 flex items-center justify-center text-sm font-bold text-indigo-200">
-                  {currentUser?.name ? currentUser.name.charAt(0).toUpperCase() : "U"}
+                <div className="w-8 h-8 rounded-full overflow-hidden bg-indigo-600/30 border border-indigo-500/50 flex items-center justify-center text-sm font-bold text-indigo-200 shrink-0">
+                  {currentUser?.profilePicture ? (
+                    <img src={currentUser.profilePicture} alt="Avatar" className="w-full h-full object-cover" />
+                  ) : (
+                    currentUser?.name ? currentUser.name.charAt(0).toUpperCase() : "U"
+                  )}
                 </div>
                 <span className="hidden sm:inline text-sm font-medium text-zinc-300">{currentUser?.name}</span>
                 <ChevronDown size={14} className="text-zinc-500" />
@@ -346,20 +561,20 @@ export default function Dashboard() {
               </div>
 
               {/* Stat Cards */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
                 {[
-                  { label: "Active Teams", value: teams.length, change: "Updated live", icon: Users, color: "text-indigo-400" },
-                  { label: "Unread Messages", value: "0", change: "None yet", icon: MessageSquare, color: "text-emerald-400" },
-                  { label: "Tasks Pending", value: "3", change: "2 due today", icon: CheckSquare, color: "text-amber-400" },
-                  { label: "Meetings Today", value: "1", change: "Starts at 2:00 PM", icon: Video, color: "text-purple-400" },
+                  { label: "Active Teams", value: teams.length, change: "Updated live", icon: Users, color: "text-purple-400", border: "border-l-purple-500", bg: "bg-purple-500/10" },
+                  { label: "Unread Messages", value: "0", change: "None yet", icon: MessageSquare, color: "text-blue-400", border: "border-l-blue-500", bg: "bg-blue-500/10" },
+                  { label: "Tasks Pending", value: "3", change: "2 due today", icon: CheckSquare, color: "text-orange-400", border: "border-l-orange-500", bg: "bg-orange-500/10" },
+                  { label: "Meetings Today", value: "1", change: "Starts at 2:00 PM", icon: Video, color: "text-green-400", border: "border-l-green-500", bg: "bg-green-500/10" },
                 ].map((stat, i) => {
                   const Icon = stat.icon;
                   return (
-                    <div key={i} className="p-6 bg-zinc-900 border border-zinc-800/80 rounded-2xl space-y-4 hover:border-zinc-700/80 transition-all">
+                    <div key={i} className={`p-6 bg-zinc-900 border border-zinc-800/80 border-l-[3px] ${stat.border} rounded-2xl space-y-4 hover:border-zinc-700/80 hover:border-l-[3px] transition-all duration-200`}>
                       <div className="flex justify-between items-center">
-                        <span className="text-xs font-semibold uppercase tracking-wider text-zinc-500">{stat.label}</span>
-                        <div className={`p-2 bg-zinc-950 rounded-lg ${stat.color}`}>
-                          <Icon size={16} />
+                        <span className="text-xs font-semibold uppercase tracking-wider text-zinc-550">{stat.label}</span>
+                        <div className={`p-2.5 rounded-xl ${stat.bg} ${stat.color}`}>
+                          <Icon size={18} />
                         </div>
                       </div>
                       <div className="space-y-1">
@@ -476,14 +691,33 @@ export default function Dashboard() {
                           {selectedTeam.members?.length || 1} members &bull; Owner: {selectedTeam.owner}
                         </p>
                       </div>
-                      <button 
-                        onClick={() => setShowInviteModal(true)}
-                        className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer"
-                        id="invite-member-btn"
-                      >
-                        <UserPlus size={14} />
-                        <span>Invite</span>
-                      </button>
+                      <div className="flex items-center gap-2">
+                        {(() => {
+                          const memberRoles = selectedTeam.memberRoles || {};
+                          const userRole = memberRoles[currentUser?.email] || (selectedTeam.owner === currentUser?.email ? "owner" : "member");
+                          if (userRole === "owner" || userRole === "co-lead") {
+                            return (
+                              <button
+                                onClick={() => setShowManageTeamModal(true)}
+                                className="px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer border border-zinc-700/50"
+                                id="manage-team-btn"
+                              >
+                                <Shield size={14} className="text-indigo-400" />
+                                <span>Manage Team</span>
+                              </button>
+                            );
+                          }
+                          return null;
+                        })()}
+                        <button 
+                          onClick={() => setShowInviteModal(true)}
+                          className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer"
+                          id="invite-member-btn"
+                        >
+                          <UserPlus size={14} />
+                          <span>Invite</span>
+                        </button>
+                      </div>
                     </div>
 
                     {/* Messages Body */}
@@ -569,143 +803,40 @@ export default function Dashboard() {
             </div>
           )}
 
-          {/* TAB: MEETINGS (PLACEHOLDER) */}
-          {activeTab === "meetings" && (
-            <div className="p-6 max-w-4xl space-y-6">
-              <div className="p-8 bg-zinc-900 border border-zinc-800 rounded-2xl space-y-6">
-                <div className="flex justify-between items-center">
-                  <h3 className="text-xl font-bold text-white">Video Meetings</h3>
-                  <button className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-sm font-semibold transition-all cursor-pointer">
-                    Schedule Meeting
-                  </button>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="p-6 bg-zinc-950 rounded-xl border border-zinc-800 flex flex-col justify-between h-40">
-                    <div>
-                      <span className="px-2.5 py-1 bg-indigo-500/10 text-indigo-400 rounded-full text-xs font-semibold">Instant Call</span>
-                      <h4 className="font-bold text-lg text-white mt-2">Start a quick call</h4>
-                      <p className="text-xs text-zinc-500 mt-1">Generate a quick link and invite team members to join immediately.</p>
-                    </div>
-                    <button className="w-full mt-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-white rounded-lg text-xs font-semibold transition-all cursor-pointer">
-                      Start Meeting
-                    </button>
-                  </div>
-                  <div className="p-6 bg-zinc-950 rounded-xl border border-zinc-800 flex flex-col justify-between h-40">
-                    <div>
-                      <span className="px-2.5 py-1 bg-purple-500/10 text-purple-400 rounded-full text-xs font-semibold">Scheduled Call</span>
-                      <h4 className="font-bold text-lg text-white mt-2">Google Meet Sync</h4>
-                      <p className="text-xs text-zinc-500 mt-1">Connect your Google calendar and access scheduling right inside Huddlr.</p>
-                    </div>
-                    <button className="w-full mt-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-white rounded-lg text-xs font-semibold transition-all cursor-pointer">
-                      Integrate Calendar
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
+          {/* TAB: MEETINGS (ALL, CREATED, JOINING) */}
+          {(activeTab === "meetings" || activeTab === "meetings-created" || activeTab === "meetings-joining") && (
+            <MeetingsTab 
+              selectedTeam={selectedTeam} 
+              currentUser={currentUser} 
+              initialViewMode={activeTab === "meetings-created" ? "created" : activeTab === "meetings-joining" ? "joining" : "all"}
+            />
           )}
 
-          {/* TAB: TASKS (PLACEHOLDER) */}
+          {/* TAB: TASKS */}
           {activeTab === "tasks" && (
-            <div className="p-6 max-w-4xl space-y-6">
-              <div className="p-8 bg-zinc-900 border border-zinc-800 rounded-2xl space-y-6">
-                <div className="flex justify-between items-center">
-                  <h3 className="text-xl font-bold text-white">Sprint Tasks</h3>
-                  <button className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-sm font-semibold transition-all cursor-pointer">
-                    Add Task
-                  </button>
-                </div>
-                <div className="space-y-3">
-                  {[
-                    { title: "Implement OTP Nodemailer Delivery", status: "completed", date: "Due today" },
-                    { title: "Firestore Real-time Channel Listeners", status: "completed", date: "Due today" },
-                    { title: "Integration Testing with Browser Agent", status: "pending", date: "Due tomorrow" },
-                  ].map((task, idx) => (
-                    <div key={idx} className="p-4 bg-zinc-950 rounded-xl border border-zinc-800 flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className={`p-1 rounded-full ${task.status === "completed" ? "bg-emerald-500/20 text-emerald-400" : "bg-amber-500/20 text-amber-400"}`}>
-                          {task.status === "completed" ? <CheckCircle size={16} /> : <Clock size={16} />}
-                        </div>
-                        <span className={`text-sm ${task.status === "completed" ? "line-through text-zinc-500" : "text-zinc-200"}`}>{task.title}</span>
-                      </div>
-                      <span className="text-xs text-zinc-500 font-mono">{task.date}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
+            <TasksTab selectedTeam={selectedTeam} currentUser={currentUser} />
           )}
 
-          {/* TAB: DOCUMENTS (PLACEHOLDER) */}
+          {/* TAB: VOICE NOTES */}
+          {activeTab === "voice-notes" && (
+            <VoiceNotesTab selectedTeam={selectedTeam} currentUser={currentUser} />
+          )}
+
+          {/* TAB: DOCUMENTS */}
           {activeTab === "documents" && (
-            <div className="p-6 max-w-4xl space-y-6">
-              <div className="p-8 bg-zinc-900 border border-zinc-800 rounded-2xl space-y-6">
-                <div className="flex justify-between items-center">
-                  <h3 className="text-xl font-bold text-white">Shared Documents</h3>
-                  <button className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-sm font-semibold transition-all cursor-pointer">
-                    Upload File
-                  </button>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {[
-                    { name: "Huddlr Architecture.pdf", size: "4.2 MB", type: "PDF Document" },
-                    { name: "Development Sprint Plan.docx", size: "1.8 MB", type: "Word File" },
-                    { name: "Firebase API Keys.txt", size: "12 KB", type: "Text File" },
-                    { name: "Huddlr Brand Guidelines.pdf", size: "8.5 MB", type: "PDF Document" }
-                  ].map((doc, idx) => (
-                    <div key={idx} className="p-4 bg-zinc-950 rounded-xl border border-zinc-800 flex items-center justify-between hover:border-zinc-700 transition-all">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded bg-zinc-900 border border-zinc-850 flex items-center justify-center text-xs text-indigo-400 font-bold shrink-0">
-                          DOC
-                        </div>
-                        <div className="min-w-0">
-                          <p className="text-sm font-semibold text-zinc-200 truncate">{doc.name}</p>
-                          <p className="text-xs text-zinc-500">{doc.type}</p>
-                        </div>
-                      </div>
-                      <span className="text-xs text-zinc-500 font-mono">{doc.size}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
+            <DocumentsTab selectedTeam={selectedTeam} currentUser={currentUser} />
           )}
 
-          {/* TAB: SETTINGS (PLACEHOLDER) */}
+          {/* TAB: SETTINGS */}
           {activeTab === "settings" && (
-            <div className="p-6 max-w-2xl space-y-6">
-              <div className="p-8 bg-zinc-900 border border-zinc-800 rounded-2xl space-y-6">
-                <h3 className="text-xl font-bold text-white border-b border-zinc-800 pb-4">Account Settings</h3>
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-2">Display Name</label>
-                    <input 
-                      type="text" 
-                      disabled 
-                      value={currentUser?.name || ""}
-                      className="w-full px-4 py-3 bg-zinc-950 border border-zinc-850 rounded-xl text-sm text-zinc-400"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-2">Email Address</label>
-                    <input 
-                      type="email" 
-                      disabled 
-                      value={currentUser?.email || ""}
-                      className="w-full px-4 py-3 bg-zinc-950 border border-zinc-850 rounded-xl text-sm text-zinc-400"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-2">Notification Settings</label>
-                    <div className="p-4 bg-zinc-950 rounded-xl border border-zinc-850 flex items-center justify-between">
-                      <span className="text-sm text-zinc-300">Enable Desktop Notifications</span>
-                      <div className="w-10 h-6 bg-indigo-600 rounded-full p-1 cursor-pointer flex items-center justify-end">
-                        <div className="w-4 h-4 bg-white rounded-full"></div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
+            <div className="p-6 space-y-6 max-w-5xl">
+              <SettingsTab 
+                currentUser={currentUser} 
+                onUserUpdate={handleUserUpdate} 
+                selectedTeam={selectedTeam} 
+                onTeamUpdate={handleTeamUpdate} 
+                onLeaveTeam={handleLeaveTeam} 
+              />
             </div>
           )}
 
@@ -813,6 +944,16 @@ export default function Dashboard() {
             </form>
           </div>
         </div>
+      )}
+
+      {/* MANAGE TEAM MODAL */}
+      {showManageTeamModal && selectedTeam && currentUser && (
+        <ManageTeamModal
+          selectedTeam={selectedTeam}
+          currentUser={currentUser}
+          onClose={() => setShowManageTeamModal(false)}
+          onTeamUpdate={handleTeamUpdate}
+        />
       )}
 
     </div>
