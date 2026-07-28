@@ -67,7 +67,8 @@ export async function POST(request) {
       message: "Account verified successfully",
       user: {
         name: otpData.name,
-        email: otpData.email
+        email: otpData.email,
+        role: otpData.role || "member"
       }
     });
   } catch (error) {

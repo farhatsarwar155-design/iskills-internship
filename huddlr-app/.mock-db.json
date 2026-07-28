@@ -35,33 +35,12 @@
       "role": "member",
       "createdAt": 1784790092240
     },
-    "admin-1784790192656@huddlr.com": {
-      "name": "Super Admin",
-      "email": "admin-1784790192656@huddlr.com",
-      "password": "$2b$10$ooxFpl/oD9hGixt7Y92w5eFZLS8zM5y4Vpp6ByoIxTj8jvr2ZBbc6",
-      "role": "member",
-      "createdAt": 1784790195392
-    },
-    "admin-1784790434169@huddlr.com": {
-      "name": "Super Admin",
-      "email": "admin-1784790434169@huddlr.com",
-      "password": "$2b$10$0lr482zEhR0oUgBDRVddx.uj.u4vaA7uSCTqGMo.TrZp63vpEthd2",
-      "role": "member",
-      "createdAt": 1784790437381
-    },
     "farhasarwar640@gmail.com": {
       "name": "pakeeza",
       "email": "farhasarwar640@gmail.com",
       "password": "$2b$10$qPUc46AaMnh1p7Llv0Eaqe2DBs1Pkfqb/hQvTsAFakOrGIv9laImy",
       "role": "member",
       "createdAt": 1784790972903
-    },
-    "admin-1784791809302@huddlr.com": {
-      "name": "Super Admin",
-      "email": "admin-1784791809302@huddlr.com",
-      "password": "$2b$10$quTq5KAJCK0Pf7B9y1G6BuJ8QYGwtdgy/clAZqd6KM3JoZB.d/x8a",
-      "role": "member",
-      "createdAt": 1784791812683
     },
     "farisarwar888@gmail.com": {
       "name": "ayesha",
@@ -80,13 +59,6 @@
         "taskAssigned": true
       }
     },
-    "farhasrwr@gmail.com": {
-      "name": "iqra",
-      "email": "farhasrwr@gmail.com",
-      "password": "$2b$10$NnE/Bgjm6YeTN/Ug6jPx2O9l1xXSOLfI2eeP4Ng9CgZV5vyM2l2X.",
-      "role": "admin",
-      "createdAt": 1784794039082
-    },
     "regular-user-1784807502517@example.com": {
       "name": "Regular User",
       "email": "regular-user-1784807502517@example.com",
@@ -94,12 +66,12 @@
       "role": "member",
       "createdAt": 1784807509262
     },
-    "admin-security-1784807511416@huddlr.com": {
-      "name": "Security Admin",
-      "email": "admin-security-1784807511416@huddlr.com",
-      "password": "$2b$10$z3aJVjqSkMT6aq/4knuLw.QFgSTRWPOCidFVT84VkXkqrW/yknQoy",
-      "role": "member",
-      "createdAt": 1784807515715
+    "new-admin-1785206035053@huddlr.com": {
+      "name": "Super Admin Test",
+      "email": "new-admin-1785206035053@huddlr.com",
+      "password": "$2b$10$I5kLQf9KWnw5Jp.E9GERru.1LMIB2uRZcpCgxsv0D4xtY5nl8ZlvG",
+      "role": "admin",
+      "createdAt": 1785206039504
     }
   },
   "otps": {
@@ -110,36 +82,20 @@
       "otp": "358454",
       "expiresAt": 1784622294367
     },
-    "admin-1784790176798@huddlr.com": {
-      "name": "Super Admin",
-      "email": "admin-1784790176798@huddlr.com",
-      "hashedPassword": "$2b$10$q7r/wzxOCqoJIvAqwfYmDuYL6LicHBOuAZ4gSRK2nThKbST/IH9e.",
-      "otp": "863628",
-      "expiresAt": 1784790776913,
-      "role": "admin"
-    },
-    "new-admin-1784791761337@example.com": {
-      "name": "Good Admin",
-      "email": "new-admin-1784791761337@example.com",
-      "hashedPassword": "$2b$10$UkvWk.ABHbqvUOaAeddWEebIJR4/NYQQkFHFh6VEZDVxT1W5pFJnK",
-      "otp": "587652",
-      "expiresAt": 1784792362190,
-      "role": "admin"
-    },
-    "admin-1784791797940@huddlr.com": {
-      "name": "Super Admin",
-      "email": "admin-1784791797940@huddlr.com",
-      "hashedPassword": "$2b$10$Xs3qNUjIMhPmGpXfzpv1V.l7rFesD4na6u1TEsAhz3Bh3cYiu2D7y",
-      "otp": "625832",
-      "expiresAt": 1784792398128,
-      "role": "admin"
-    },
     "fatimachoudhry91@gmail.com": {
       "name": "iqra",
       "email": "fatimachoudhry91@gmail.com",
       "hashedPassword": "$2b$10$flDKFMvfJl5r7jsn9c6EFe/sJ74DSxE30oogOr3cw/i7KxyfWoUpG",
       "otp": "429270",
       "expiresAt": 1784798165515,
+      "role": "admin"
+    },
+    "farhasrwr@gmail.com": {
+      "name": "pakeeza",
+      "email": "farhasrwr@gmail.com",
+      "hashedPassword": "$2b$10$cIzA/5p9t95OOjoxhoBfQeYU7thb5FJLNHIJQF3orUUE2Dn3oOs9W",
+      "otp": "177715",
+      "expiresAt": 1785206736652,
       "role": "admin"
     }
   },

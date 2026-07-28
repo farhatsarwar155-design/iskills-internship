@@ -62,7 +62,11 @@ function VerifyOtpContent() {
 
       setSuccess("Account verified successfully! Redirecting...");
       setTimeout(() => {
-        router.push("/dashboard");
+        if (data.user?.role === "admin") {
+          router.push("/admin");
+        } else {
+          router.push("/dashboard");
+        }
       }, 1500);
     } catch (err) {
       setError(err.message);
