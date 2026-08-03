@@ -9,53 +9,101 @@ export async function middleware(request) {
   const token = request.cookies.get("token")?.value;
   const { pathname } = request.nextUrl;
 
+  // ─── Verify JWT token ────────────────────────────────────────────────────────
   let isValid = false;
-  let payload = null;
+  let userRole = null;
+
   if (token) {
     try {
-      const result = await jwtVerify(token, JWT_SECRET);
-      payload = result.payload;
+      const { payload } = await jwtVerify(token, JWT_SECRET);
       isValid = true;
+      userRole = payload.role;
     } catch (err) {
       isValid = false;
     }
   }
 
-  // Allow /admin/register to be publicly accessible (must check BEFORE admin block below)
-  if (pathname === "/admin/register" || pathname.startsWith("/admin/register/")) {
+  const isAdmin = isValid && userRole === "admin";
+  const isMember = isValid && userRole !== "admin";
+
+  // ─── BLOCK /admin/register completely ───────────────────────────────────────
+  // No public admin self-registration allowed
+  if (pathname.startsWith("/admin/register")) {
+    // Redirect to login if not logged in, to admin panel if already admin,
+    // or to dashboard if a regular member somehow reaches it
+    if (!isValid) return NextResponse.redirect(new URL("/login", request.url));
+    if (isAdmin) return NextResponse.redirect(new URL("/admin", request.url));
+    return NextResponse.redirect(new URL("/dashboard", request.url));
+  }
+
+  // ─── PROTECT /admin routes ───────────────────────────────────────────────────
+  // Only "admin" role users may access /admin
+  if (pathname.startsWith("/admin")) {
+    if (!isValid) {
+      return NextResponse.redirect(new URL("/login", request.url));
+    }
+    if (!isAdmin) {
+      // Regular users → send back to their workspace
+      return NextResponse.redirect(new URL("/dashboard", request.url));
+    }
+    // Admin is allowed through
     return NextResponse.next();
   }
 
-  // Strictly protect ALL /admin routes (including bare /admin):
-  // Non-authenticated → /login, authenticated non-admin → /dashboard
-  if (pathname === "/admin" || pathname.startsWith("/admin/")) {
+  // ─── PROTECT /team/* routes (Team Dashboard) ──────────────────────────────────
+  // Requires valid session; admins redirected to /admin, guests to /login
+  // Team membership is verified client-side on the page itself
+  if (pathname.startsWith("/team/")) {
     if (!isValid) {
-      const url = new URL("/login", request.url);
-      return NextResponse.redirect(url);
+      return NextResponse.redirect(new URL("/login", request.url));
     }
-    if (payload?.role !== "admin") {
-      const url = new URL("/dashboard", request.url);
-      return NextResponse.redirect(url);
+    if (isAdmin) {
+      return NextResponse.redirect(new URL("/admin", request.url));
     }
+    return NextResponse.next();
   }
 
-  const isAuthPage = pathname.startsWith("/login") || pathname.startsWith("/register") || pathname.startsWith("/verify-otp");
-  const isProtectedPage = pathname.startsWith("/dashboard") || pathname.startsWith("/meetings");
+  // ─── PROTECT /dashboard and /meetings routes ─────────────────────────────────
+  // Admins should NOT access the regular workspace — redirect them to /admin
+  const isWorkspacePage = pathname.startsWith("/dashboard") || pathname.startsWith("/meetings");
 
-  if (isProtectedPage && !isValid) {
-    const url = new URL("/login", request.url);
-    return NextResponse.redirect(url);
+  if (isWorkspacePage) {
+    if (!isValid) {
+      return NextResponse.redirect(new URL("/login", request.url));
+    }
+    if (isAdmin) {
+      // Admin has no business in the user workspace
+      return NextResponse.redirect(new URL("/admin", request.url));
+    }
+    // Regular member is allowed through
+    return NextResponse.next();
   }
+
+  // ─── AUTH pages (login / register / verify-otp) ──────────────────────────────
+  const isAuthPage =
+    pathname.startsWith("/login") ||
+    pathname.startsWith("/register") ||
+    pathname.startsWith("/verify-otp");
 
   if (isAuthPage && isValid) {
-    const url = new URL(payload?.role === "admin" ? "/admin" : "/dashboard", request.url);
-    return NextResponse.redirect(url);
+    // Already logged in → send to correct home based on role
+    if (isAdmin) {
+      return NextResponse.redirect(new URL("/admin", request.url));
+    }
+    return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 
   return NextResponse.next();
 }
 
 export const config = {
-  // "/admin" must be listed explicitly because "/admin/:path*" only matches /admin/something, not /admin itself
-  matcher: ["/dashboard/:path*", "/admin", "/admin/:path*", "/meetings/:path*", "/login", "/register", "/verify-otp"]
+  matcher: [
+    "/dashboard/:path*",
+    "/admin/:path*",
+    "/team/:path*",
+    "/meetings/:path*",
+    "/login",
+    "/register",
+    "/verify-otp",
+  ],
 };

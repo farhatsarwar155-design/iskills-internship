@@ -20,18 +20,13 @@ export async function POST(request) {
 
     const userData = userDocSnap.data();
 
-    // Check if user is banned
-    if (userData.isBanned) {
-      return NextResponse.json({ error: "Your account has been suspended" }, { status: 403 });
-    }
-
     // Verify password
     const isMatch = await comparePassword(password, userData.password);
     if (!isMatch) {
       return NextResponse.json({ error: "Invalid email or password" }, { status: 400 });
     }
 
-    // Sign JWT session token
+    // Sign JWT session token - include role for admin redirect
     const token = await signJWT({
       name: userData.name,
       email: userData.email,
@@ -54,7 +49,8 @@ export async function POST(request) {
       message: "Login successful",
       user: {
         name: userData.name,
-        email: userData.email
+        email: userData.email,
+        role: userData.role || "member"
       }
     });
   } catch (error) {

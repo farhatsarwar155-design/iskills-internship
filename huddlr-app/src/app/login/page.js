@@ -32,7 +32,12 @@ export default function Login() {
         throw new Error(data.error || "Login failed");
       }
 
-      router.push("/dashboard");
+      // Smart redirect: admin → /admin, regular users → /dashboard
+      if (data.user?.role === "admin") {
+        router.push("/admin");
+      } else {
+        router.push("/dashboard");
+      }
     } catch (err) {
       setError(err.message);
     } finally {

@@ -6,32 +6,32 @@ import { collection, getDocs, doc, getDoc, updateDoc, deleteDoc } from "@/lib/fi
 async function requireAdmin() {
   const cookieStore = await cookies();
   const token = cookieStore.get("token")?.value;
-  if (!token) return { error: "Unauthorized", status: 401 };
+  if (!token) return null;
   const payload = await verifyJWT(token);
-  if (!payload) return { error: "Unauthorized", status: 401 };
+  if (!payload) return null;
   
   const userDocRef = doc(null, "users", payload.email);
   const userDocSnap = await getDoc(userDocRef);
-  if (!userDocSnap.exists()) return { error: "Forbidden: User not found", status: 403 };
+  if (!userDocSnap.exists()) return null;
   const userData = userDocSnap.data();
-  if (userData.role !== "admin") return { error: "Forbidden: Admin access required", status: 403 };
-  return { admin: userData };
+  if (userData.role !== "admin") return null;
+  return userData;
 }
 
 export async function GET() {
   try {
-    const auth = await requireAdmin();
-    if (auth.error) return NextResponse.json({ error: auth.error }, { status: auth.status });
-    const admin = auth.admin;
+    const admin = await requireAdmin();
+    if (!admin) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const teamsSnap = await getDocs(collection(null, "teams"));
     const teams = [];
     teamsSnap.forEach(tDoc => {
       const t = tDoc.data();
+      const creator = t.createdBy || t.creatorEmail || t.owner || t.ownerId || (Array.isArray(t.members) && t.members[0]) || "—";
       teams.push({
         id: tDoc.id,
         name: t.name,
-        createdBy: t.createdBy || "—",
+        createdBy: creator,
         createdAt: t.createdAt || null,
         memberCount: Array.isArray(t.members) ? t.members.length : 0,
         members: Array.isArray(t.members) ? t.members : []
@@ -47,9 +47,8 @@ export async function GET() {
 
 export async function POST(request) {
   try {
-    const auth = await requireAdmin();
-    if (auth.error) return NextResponse.json({ error: auth.error }, { status: auth.status });
-    const admin = auth.admin;
+    const admin = await requireAdmin();
+    if (!admin) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const { action, teamId } = await request.json();
 

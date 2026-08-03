@@ -33,13 +33,13 @@ import NotificationsDropdown from "@/components/dashboard/NotificationsDropdown"
 import VoiceNotesTab from "@/components/dashboard/VoiceNotesTab";
 import DocumentsTab from "@/components/dashboard/DocumentsTab";
 import SettingsTab from "@/components/dashboard/SettingsTab";
-import ManageTeamModal from "@/components/dashboard/ManageTeamModal";
 
 export default function Dashboard() {
   const router = useRouter();
   
   // Navigation & User State
-  const [activeTab, setActiveTab] = useState("dashboard");
+    // Tab state for Chat / Overview
+    const [activeTab, setActiveTab] = useState('chat');
   const [meetingsSubmenuOpen, setMeetingsSubmenuOpen] = useState(true);
   const [currentUser, setCurrentUser] = useState(null);
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
@@ -65,10 +65,15 @@ export default function Dashboard() {
   const [showCreateTeamModal, setShowCreateTeamModal] = useState(false);
   const [inviteEmail, setInviteEmail] = useState("");
   const [showInviteModal, setShowInviteModal] = useState(false);
-  const [showManageTeamModal, setShowManageTeamModal] = useState(false);
   const [inviteError, setInviteError] = useState("");
   const [inviteSuccess, setInviteSuccess] = useState("");
   const [createTeamError, setCreateTeamError] = useState("");
+
+  // Manage Team State
+  const [showManageTeamModal, setShowManageTeamModal] = useState(false);
+  const [manageTeamName, setManageTeamName] = useState("");
+  const [manageError, setManageError] = useState("");
+  const [manageSuccess, setManageSuccess] = useState("");
 
   const messagesEndRef = useRef(null);
   const myMeetingsRef = useRef([]);
@@ -301,6 +306,69 @@ export default function Dashboard() {
     }
   };
 
+  const handleRenameTeam = async (e) => {
+    e.preventDefault();
+    if (!manageTeamName.trim() || !selectedTeam) return;
+    setManageError("");
+    setManageSuccess("");
+    try {
+      const res = await fetch("/api/teams", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ teamId: selectedTeam.id, name: manageTeamName.trim() })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to rename team");
+      
+      const updatedName = manageTeamName.trim();
+      setSelectedTeam(prev => ({ ...prev, name: updatedName }));
+      setTeams(prev => prev.map(t => t.id === selectedTeam.id ? { ...t, name: updatedName } : t));
+      setManageSuccess("Team renamed successfully!");
+    } catch (err) {
+      setManageError(err.message);
+    }
+  };
+
+  const handleRemoveTeamMember = async (memberEmail) => {
+    if (!selectedTeam) return;
+    setManageError("");
+    setManageSuccess("");
+    try {
+      const res = await fetch("/api/teams", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ teamId: selectedTeam.id, memberToRemove: memberEmail })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to remove member");
+      
+      const updatedMembers = data.members || selectedTeam.members.filter(m => m !== memberEmail);
+      setSelectedTeam(prev => ({ ...prev, members: updatedMembers }));
+      setTeams(prev => prev.map(t => t.id === selectedTeam.id ? { ...t, members: updatedMembers } : t));
+      setManageSuccess(`Removed ${memberEmail} from team.`);
+    } catch (err) {
+      setManageError(err.message);
+    }
+  };
+
+  const handleDeleteTeamByOwner = async () => {
+    if (!selectedTeam) return;
+    if (!confirm(`Are you sure you want to delete "${selectedTeam.name}"? This action cannot be undone.`)) return;
+    try {
+      await fetch("/api/admin/teams", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "deleteTeam", teamId: selectedTeam.id })
+      });
+      const updatedTeams = teams.filter(t => t.id !== selectedTeam.id);
+      setTeams(updatedTeams);
+      setSelectedTeam(updatedTeams.length > 0 ? updatedTeams[0] : null);
+      setShowManageTeamModal(false);
+    } catch (err) {
+      setManageError("Failed to delete team");
+    }
+  };
+
   const handleSendMessage = async (e) => {
     e.preventDefault();
     if (!messageInput.trim() || !selectedTeam || !currentUser) return;
@@ -353,9 +421,9 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-white flex flex-col md:flex-row font-sans">
+    <div className="h-screen w-full bg-zinc-950 text-white flex flex-col md:flex-row font-sans overflow-hidden">
       {/* Sidebar navigation */}
-      <aside className="w-full md:w-64 bg-zinc-900 border-b md:border-b-0 md:border-r border-zinc-800 flex flex-col shrink-0">
+      <aside className="w-full md:w-64 md:h-screen bg-zinc-900 border-b md:border-b-0 md:border-r border-zinc-800 flex flex-col shrink-0 z-30">
         {/* Brand / Logo */}
         <div className="p-6 border-b border-zinc-800 flex items-center gap-3">
           <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center shadow-lg shadow-indigo-600/20">
@@ -367,7 +435,7 @@ export default function Dashboard() {
         </div>
 
         {/* Navigation list */}
-        <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
+        <nav className="flex-1 p-4 space-y-1 overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
           {(() => {
             const navItems = [
               { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -388,27 +456,10 @@ export default function Dashboard() {
               { id: "settings", label: "Settings", icon: SettingsIcon },
             ];
 
-            if (currentUser?.role === "admin") {
-              navItems.push({ id: "admin", label: "Admin Panel", icon: Shield, isExternal: true, href: "/admin" });
-            }
-
             return navItems.map((item) => {
               const Icon = item.icon;
               const isSubActive = item.subItems?.some(sub => activeTab === sub.id);
               const isActive = activeTab === item.id || isSubActive;
-
-              if (item.isExternal) {
-                return (
-                  <Link
-                    key={item.id}
-                    href={item.href}
-                    className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-205 text-zinc-400 hover:bg-zinc-800 hover:text-white"
-                  >
-                    <Icon size={18} className="text-indigo-400" />
-                    <span>{item.label}</span>
-                  </Link>
-                );
-              }
 
               if (item.subItems) {
                 return (
@@ -490,7 +541,7 @@ export default function Dashboard() {
       </aside>
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+      <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
         {/* Top Header Bar */}
         <header className="h-16 border-b border-zinc-800 bg-zinc-900/50 backdrop-blur-md px-6 flex items-center justify-between shrink-0 relative z-20">
           <div className="flex items-center gap-2">
@@ -561,20 +612,20 @@ export default function Dashboard() {
               </div>
 
               {/* Stat Cards */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 {[
-                  { label: "Active Teams", value: teams.length, change: "Updated live", icon: Users, color: "text-purple-400", border: "border-l-purple-500", bg: "bg-purple-500/10" },
-                  { label: "Unread Messages", value: "0", change: "None yet", icon: MessageSquare, color: "text-blue-400", border: "border-l-blue-500", bg: "bg-blue-500/10" },
-                  { label: "Tasks Pending", value: "3", change: "2 due today", icon: CheckSquare, color: "text-orange-400", border: "border-l-orange-500", bg: "bg-orange-500/10" },
-                  { label: "Meetings Today", value: "1", change: "Starts at 2:00 PM", icon: Video, color: "text-green-400", border: "border-l-green-500", bg: "bg-green-500/10" },
+                  { label: "Active Teams", value: teams.length, change: "Updated live", icon: Users, color: "text-indigo-400" },
+                  { label: "Unread Messages", value: "0", change: "None yet", icon: MessageSquare, color: "text-emerald-400" },
+                  { label: "Tasks Pending", value: "3", change: "2 due today", icon: CheckSquare, color: "text-amber-400" },
+                  { label: "Meetings Today", value: "1", change: "Starts at 2:00 PM", icon: Video, color: "text-purple-400" },
                 ].map((stat, i) => {
                   const Icon = stat.icon;
                   return (
-                    <div key={i} className={`p-6 bg-zinc-900 border border-zinc-800/80 border-l-[3px] ${stat.border} rounded-2xl space-y-4 hover:border-zinc-700/80 hover:border-l-[3px] transition-all duration-200`}>
+                    <div key={i} className="p-6 bg-zinc-900 border border-zinc-800/80 rounded-2xl space-y-4 hover:border-zinc-700/80 transition-all">
                       <div className="flex justify-between items-center">
-                        <span className="text-xs font-semibold uppercase tracking-wider text-zinc-550">{stat.label}</span>
-                        <div className={`p-2.5 rounded-xl ${stat.bg} ${stat.color}`}>
-                          <Icon size={18} />
+                        <span className="text-xs font-semibold uppercase tracking-wider text-zinc-500">{stat.label}</span>
+                        <div className={`p-2 bg-zinc-950 rounded-lg ${stat.color}`}>
+                          <Icon size={16} />
                         </div>
                       </div>
                       <div className="space-y-1">
@@ -639,42 +690,66 @@ export default function Dashboard() {
 
           {/* TAB: TEAM CHAT */}
           {activeTab === "chat" && (
-            <div className="h-[calc(100vh-4rem)] flex overflow-hidden">
+            <div className="h-full flex-1 flex overflow-hidden">
               {/* Teams List Sidebar inside Chat */}
-              <div className="w-64 bg-zinc-900 border-r border-zinc-800/80 flex flex-col shrink-0">
-                <div className="p-4 border-b border-zinc-800/80 flex justify-between items-center">
+              <div className="w-64 bg-zinc-900/90 border-r border-zinc-800/80 flex flex-col shrink-0">
+                <div className="p-4 border-b border-zinc-800/80 flex justify-between items-center bg-zinc-950/30">
                   <span className="text-xs font-bold text-zinc-400 uppercase tracking-wider">My Teams</span>
                   <button 
                     onClick={() => setShowCreateTeamModal(true)}
-                    className="p-1 text-zinc-400 hover:text-white hover:bg-zinc-800 rounded-lg transition-all cursor-pointer"
+                    className="p-1.5 text-zinc-400 hover:text-white hover:bg-zinc-800 rounded-lg transition-all cursor-pointer"
                     id="create-team-btn"
+                    title="Create Team"
                   >
                     <Plus size={16} />
                   </button>
                 </div>
 
                 {/* Teams List */}
-                <div className="flex-1 overflow-y-auto p-2 space-y-1">
+                <div className="flex-1 overflow-y-auto p-3 space-y-1.5">
                   {teams.length === 0 ? (
                     <div className="p-4 text-center text-xs text-zinc-500">No teams joined yet. Create one!</div>
                   ) : (
-                    teams.map((t) => (
-                      <button
-                        key={t.id}
-                        onClick={() => setSelectedTeam(t)}
-                        className={`w-full text-left px-3 py-2.5 rounded-lg text-sm font-medium transition-all flex items-center gap-2 cursor-pointer ${
-                          selectedTeam?.id === t.id 
-                            ? "bg-indigo-600/10 border border-indigo-500/20 text-indigo-200" 
-                            : "text-zinc-400 hover:bg-zinc-800/50 hover:text-white border border-transparent"
-                        }`}
-                        id={`team-item-${t.name}`}
-                      >
-                        <div className="w-6 h-6 rounded bg-zinc-800 flex items-center justify-center text-xs font-bold text-zinc-400 shrink-0">
-                          {t.name.charAt(0).toUpperCase()}
+                    teams.map((t) => {
+                      const isSelected = selectedTeam?.id === t.id;
+                      return (
+                        <div key={t.id} className="relative group/team-item">
+                          <button
+                            onClick={() => setSelectedTeam(t)}
+                            className={`w-full text-left pl-3.5 pr-10 py-2.5 rounded-xl text-sm font-medium transition-all flex items-center justify-between gap-2.5 cursor-pointer border ${
+                              isSelected 
+                                ? "bg-indigo-600/15 border-indigo-500/30 text-indigo-200 font-semibold shadow-sm" 
+                                : "text-zinc-400 hover:bg-zinc-800/60 hover:text-white border-transparent hover:border-zinc-800/80"
+                            }`}
+                            id={`team-item-${t.name}`}
+                          >
+                            <div className="flex items-center gap-2.5 min-w-0">
+                              <div className={`w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold shrink-0 transition-all ${
+                                isSelected
+                                  ? "bg-indigo-600 text-white shadow-sm"
+                                  : "bg-zinc-800 text-zinc-400 border border-zinc-700/50"
+                              }`}>
+                                {t.name.charAt(0).toUpperCase()}
+                              </div>
+                              <span className="truncate">{t.name}</span>
+                            </div>
+                            {t.unreadCount > 0 && (
+                              <span className="px-2 py-0.5 text-[10px] font-bold bg-indigo-600 text-white rounded-full shadow-sm shrink-0">
+                                {t.unreadCount}
+                              </span>
+                            )}
+                          </button>
+                          
+                          <Link
+                            href={`/team/${t.id}/dashboard`}
+                            title="Open Team Dashboard"
+                            className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1.5 bg-zinc-800 hover:bg-indigo-600 text-zinc-400 hover:text-white rounded-lg transition-all opacity-0 group-hover/team-item:opacity-100 focus:opacity-100 z-10 shadow-sm border border-zinc-700/40"
+                          >
+                            <LayoutDashboard size={14} />
+                          </Link>
                         </div>
-                        <span className="truncate">{t.name}</span>
-                      </button>
-                    ))
+                      );
+                    })
                   )}
                 </div>
               </div>
@@ -684,22 +759,27 @@ export default function Dashboard() {
                 {selectedTeam ? (
                   <>
                     {/* Chat Header */}
-                    <div className="h-14 border-b border-zinc-800 bg-zinc-900/20 px-6 flex items-center justify-between shrink-0">
+                    <div className="h-16 border-b border-zinc-800/80 bg-zinc-900/40 backdrop-blur-md px-6 flex items-center justify-between shrink-0 shadow-sm">
                       <div>
-                        <h3 className="font-bold text-white text-base">{selectedTeam.name}</h3>
-                        <p className="text-xs text-zinc-500">
-                          {selectedTeam.members?.length || 1} members &bull; Owner: {selectedTeam.owner}
+                        <h3 className="font-extrabold text-white text-lg tracking-tight flex items-center gap-2">
+                          #{selectedTeam.name}
+                        </h3>
+                        <p className="text-xs text-zinc-400 flex items-center gap-2 mt-0.5">
+                          <span>{selectedTeam.members?.length || 1} members</span>
+                          <span>&bull;</span>
+                          <span>Owner: <span className="text-zinc-300 font-medium">{selectedTeam.owner}</span></span>
                         </p>
                       </div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2.5">
                         {(() => {
                           const memberRoles = selectedTeam.memberRoles || {};
                           const userRole = memberRoles[currentUser?.email] || (selectedTeam.owner === currentUser?.email ? "owner" : "member");
-                          if (userRole === "owner" || userRole === "co-lead") {
+                          const isTeamOwnerOrAdmin = userRole === "owner" || userRole === "co-lead" || currentUser?.role === "admin";
+                          if (isTeamOwnerOrAdmin) {
                             return (
                               <button
                                 onClick={() => setShowManageTeamModal(true)}
-                                className="px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer border border-zinc-700/50"
+                                className="px-3.5 py-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 hover:text-white border border-zinc-700/60 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer shadow-sm"
                                 id="manage-team-btn"
                               >
                                 <Shield size={14} className="text-indigo-400" />
@@ -711,7 +791,7 @@ export default function Dashboard() {
                         })()}
                         <button 
                           onClick={() => setShowInviteModal(true)}
-                          className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer"
+                          className="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer shadow-md shadow-indigo-600/20 hover:shadow-indigo-600/35"
                           id="invite-member-btn"
                         >
                           <UserPlus size={14} />
@@ -721,35 +801,62 @@ export default function Dashboard() {
                     </div>
 
                     {/* Messages Body */}
-                    <div className="flex-1 overflow-y-auto p-6 space-y-4">
+                    <div className="flex-1 overflow-y-auto p-6">
                       {messages.length === 0 ? (
-                        <div className="h-full flex flex-col items-center justify-center text-zinc-500 space-y-1">
-                          <MessageSquare size={32} className="text-zinc-600" />
-                          <p className="text-sm">No messages yet in this team.</p>
-                          <p className="text-xs text-zinc-600">Send a greeting message below!</p>
+                        <div className="h-full flex flex-col items-center justify-center text-zinc-500 space-y-2">
+                          <div className="w-12 h-12 rounded-2xl bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-500">
+                            <MessageSquare size={24} />
+                          </div>
+                          <p className="text-sm font-medium text-zinc-400">No messages yet in #{selectedTeam.name}</p>
+                          <p className="text-xs text-zinc-600">Start the conversation by sending a message below!</p>
                         </div>
                       ) : (
                         messages.map((m, i) => {
                           const isOwn = m.senderEmail === currentUser?.email;
+                          const prevM = messages[i - 1];
+                          const isSameSender = prevM && prevM.senderEmail === m.senderEmail;
+                          const isCloseInTime = prevM && m.timestamp && prevM.timestamp && (new Date(m.timestamp).getTime() - new Date(prevM.timestamp).getTime() < 5 * 60 * 1000);
+                          const isConsecutive = isSameSender && isCloseInTime;
+
+                          // Consistent timestamp formatting e.g. "2:08 AM"
+                          const formatTime = (ts) => {
+                            if (!ts) return "";
+                            const date = new Date(ts);
+                            if (isNaN(date.getTime())) return "";
+                            return date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true });
+                          };
+
                           return (
-                            <div key={m.id || i} className={`flex items-start gap-3 ${isOwn ? "flex-row-reverse" : ""}`}>
-                              {/* Avatar */}
-                              <div className={`w-8 h-8 rounded-full shrink-0 flex items-center justify-center text-xs font-bold ${
-                                isOwn ? "bg-indigo-600 text-white" : "bg-zinc-800 text-zinc-300"
-                              }`}>
-                                {m.senderName ? m.senderName.charAt(0).toUpperCase() : "U"}
-                              </div>
-                              {/* Bubble */}
-                              <div className="flex flex-col max-w-[70%] space-y-1">
-                                <div className={`flex items-center gap-2 text-xs text-zinc-500 ${isOwn ? "justify-end" : ""}`}>
-                                  <span className="font-semibold text-zinc-400">{m.senderName}</span>
-                                  <span>&bull;</span>
-                                  <span>{m.timestamp ? new Date(m.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ""}</span>
-                                </div>
-                                <div className={`p-3 rounded-2xl text-sm break-words ${
+                            <div 
+                              key={m.id || i} 
+                              className={`flex items-start gap-3 ${isOwn ? "flex-row-reverse" : ""} ${isConsecutive ? "mt-1" : "mt-4"}`}
+                            >
+                              {/* Avatar - only show on first message of group */}
+                              {!isConsecutive ? (
+                                <div className={`w-8 h-8 rounded-full shrink-0 flex items-center justify-center text-xs font-bold shadow-sm ring-2 ${
                                   isOwn 
-                                    ? "bg-indigo-600 text-white rounded-tr-none" 
-                                    : "bg-zinc-900 text-zinc-200 rounded-tl-none border border-zinc-800/50"
+                                    ? "bg-indigo-600 text-white border border-indigo-400/40 ring-indigo-500/20" 
+                                    : "bg-zinc-800 text-zinc-200 border border-zinc-700/60 ring-zinc-800/40"
+                                }`}>
+                                  {m.senderName ? m.senderName.charAt(0).toUpperCase() : "U"}
+                                </div>
+                              ) : (
+                                <div className="w-8 shrink-0" />
+                              )}
+
+                              {/* Message Content */}
+                              <div className={`flex flex-col max-w-[70%] space-y-1 ${isOwn ? "items-end" : "items-start"}`}>
+                                {!isConsecutive && (
+                                  <div className={`flex items-center gap-2 text-xs px-1 ${isOwn ? "flex-row-reverse" : ""}`}>
+                                    <span className="font-semibold text-zinc-300">{m.senderName}</span>
+                                    <span className="text-zinc-600 text-[10px]">&bull;</span>
+                                    <span className="text-[11px] text-zinc-500 font-mono">{formatTime(m.timestamp)}</span>
+                                  </div>
+                                )}
+                                <div className={`px-4 py-2.5 text-sm break-words leading-relaxed ${
+                                  isOwn 
+                                    ? `bg-indigo-600 text-white shadow-md shadow-indigo-950/30 border border-indigo-500/30 ${isConsecutive ? 'rounded-2xl rounded-tr-md' : 'rounded-2xl rounded-tr-xs'}`
+                                    : `bg-zinc-900 text-zinc-100 shadow-md shadow-black/20 border border-zinc-800/80 ${isConsecutive ? 'rounded-2xl rounded-tl-md' : 'rounded-2xl rounded-tl-xs'}`
                                 }`}>
                                   {m.text}
                                 </div>
@@ -762,20 +869,21 @@ export default function Dashboard() {
                     </div>
 
                     {/* Chat Input Footer */}
-                    <form onSubmit={handleSendMessage} className="p-4 border-t border-zinc-800/80 bg-zinc-900/10">
-                      <div className="flex gap-2">
+                    <form onSubmit={handleSendMessage} className="p-4 border-t border-zinc-800/80 bg-zinc-900/40 backdrop-blur-md">
+                      <div className="flex gap-2.5">
                         <input
                           id="chat-input"
                           type="text"
                           value={messageInput}
                           onChange={(e) => setMessageInput(e.target.value)}
                           placeholder={`Message #${selectedTeam.name}`}
-                          className="flex-1 px-4 py-3 bg-zinc-900 border border-zinc-800 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 rounded-xl text-sm placeholder-zinc-500 outline-none transition-all text-white"
+                          className="flex-1 px-4 py-3 bg-zinc-900/90 border border-zinc-800 focus:border-indigo-500/80 focus:ring-2 focus:ring-indigo-500/20 rounded-xl text-sm placeholder-zinc-500 outline-none transition-all text-white shadow-inner"
                         />
                         <button
                           id="send-message-btn"
                           type="submit"
-                          className="p-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl transition-all shadow-md shadow-indigo-600/15 cursor-pointer flex items-center justify-center shrink-0"
+                          className="p-3 bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white rounded-xl transition-all shadow-md shadow-indigo-600/25 hover:shadow-indigo-600/40 cursor-pointer flex items-center justify-center shrink-0"
+                          title="Send Message"
                         >
                           <Send size={16} />
                         </button>
@@ -947,13 +1055,111 @@ export default function Dashboard() {
       )}
 
       {/* MANAGE TEAM MODAL */}
-      {showManageTeamModal && selectedTeam && currentUser && (
-        <ManageTeamModal
-          selectedTeam={selectedTeam}
-          currentUser={currentUser}
-          onClose={() => setShowManageTeamModal(false)}
-          onTeamUpdate={handleTeamUpdate}
-        />
+      {showManageTeamModal && selectedTeam && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-in fade-in duration-150">
+          <div className="w-full max-w-lg bg-zinc-900 border border-zinc-800 rounded-2xl shadow-2xl p-6 relative space-y-5">
+            <div className="flex justify-between items-center pb-3 border-b border-zinc-800">
+              <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                <Shield size={18} className="text-indigo-400" />
+                Manage #{selectedTeam.name}
+              </h3>
+              <button
+                onClick={() => { setShowManageTeamModal(false); setManageError(""); setManageSuccess(""); }}
+                className="p-1.5 text-zinc-400 hover:text-white rounded-lg hover:bg-zinc-800 transition-all cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+
+            {manageError && (
+              <div className="p-3 bg-rose-950/40 border border-rose-800/40 rounded-xl text-rose-200 text-xs">
+                {manageError}
+              </div>
+            )}
+
+            {manageSuccess && (
+              <div className="p-3 bg-emerald-950/40 border border-emerald-800/40 rounded-xl text-emerald-200 text-xs">
+                {manageSuccess}
+              </div>
+            )}
+
+            {/* Rename Team Section */}
+            <form onSubmit={handleRenameTeam} className="space-y-3">
+              <label className="block text-xs font-semibold text-zinc-400 uppercase tracking-wider">
+                Rename Team
+              </label>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={manageTeamName || selectedTeam.name}
+                  onChange={(e) => setManageTeamName(e.target.value)}
+                  className="flex-1 px-4 py-2.5 bg-zinc-950 border border-zinc-800 focus:border-indigo-500 rounded-xl text-sm outline-none text-white"
+                  placeholder="New Team Name"
+                />
+                <button
+                  type="submit"
+                  className="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-semibold cursor-pointer shrink-0"
+                >
+                  Rename
+                </button>
+              </div>
+            </form>
+
+            {/* Members List Section */}
+            <div className="space-y-2">
+              <label className="block text-xs font-semibold text-zinc-400 uppercase tracking-wider">
+                Team Members ({selectedTeam.members?.length || 1})
+              </label>
+              <div className="max-h-48 overflow-y-auto space-y-2 pr-1">
+                {selectedTeam.members?.map((email) => {
+                  const isOwner = email === selectedTeam.owner;
+                  return (
+                    <div key={email} className="flex justify-between items-center p-3 bg-zinc-950 rounded-xl border border-zinc-800/60 text-sm">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <div className="w-7 h-7 rounded-full bg-indigo-600/30 border border-indigo-500/50 flex items-center justify-center text-xs font-bold text-indigo-200 shrink-0">
+                          {email.charAt(0).toUpperCase()}
+                        </div>
+                        <span className="text-zinc-200 truncate">{email}</span>
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        {isOwner ? (
+                          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                            Owner
+                          </span>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveTeamMember(email)}
+                            className="px-2.5 py-1 bg-rose-950/40 hover:bg-rose-900/60 text-rose-300 border border-rose-800/40 rounded-lg text-xs font-medium cursor-pointer transition-all"
+                          >
+                            Remove
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Delete Team Section */}
+            {selectedTeam.owner === currentUser?.email && (
+              <div className="pt-4 border-t border-zinc-800 flex justify-between items-center">
+                <div>
+                  <p className="text-xs font-semibold text-rose-400">Danger Zone</p>
+                  <p className="text-[11px] text-zinc-500">Permanently delete this team and messages</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleDeleteTeamByOwner}
+                  className="px-4 py-2 bg-rose-600 hover:bg-rose-500 text-white rounded-xl text-xs font-semibold cursor-pointer transition-all"
+                >
+                  Delete Team
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
       )}
 
     </div>
