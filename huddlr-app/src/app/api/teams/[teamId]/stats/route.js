@@ -35,7 +35,15 @@ export async function GET(request, { params }) {
     }
 
     // Verify membership
-    if (!team.members?.includes(payload.email)) {
+    console.log("DEBUG Team Dashboard Auth:", {
+      teamId,
+      payloadEmail: payload?.email,
+      teamMembers: team?.members,
+      includes: team?.members?.map(m => m.toLowerCase()).includes(payload?.email?.toLowerCase())
+    });
+
+    const isMember = team.members?.some(m => m.toLowerCase() === payload.email?.toLowerCase());
+    if (!isMember) {
       return NextResponse.json({ error: "Not a team member" }, { status: 403 });
     }
 

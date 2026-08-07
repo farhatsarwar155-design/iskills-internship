@@ -556,7 +556,7 @@ export default function AdminDashboard() {
                               onClick={() => {
                                 // Find full team object to open modal
                                 const fullTeam = allTeams.find(t => t.id === team.id) || { id: team.id, name: team.name, members: [] };
-                                setSelectedTeamDetail(fullTeam);
+                                setDetailTeam(fullTeam);
                               }}
                               className="border-b border-zinc-800/50 hover:bg-zinc-800/30 cursor-pointer transition-colors"
                             >

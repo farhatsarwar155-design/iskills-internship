@@ -743,7 +743,7 @@ export default function Dashboard() {
                           <Link
                             href={`/team/${t.id}/dashboard`}
                             title="Open Team Dashboard"
-                            className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1.5 bg-zinc-800 hover:bg-indigo-600 text-zinc-400 hover:text-white rounded-lg transition-all opacity-0 group-hover/team-item:opacity-100 focus:opacity-100 z-10 shadow-sm border border-zinc-700/40"
+                            className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1.5 bg-zinc-800 hover:bg-indigo-600 text-zinc-400 hover:text-white rounded-lg transition-all opacity-70 hover:opacity-100 focus:opacity-100 z-10 shadow-sm border border-zinc-800/80"
                           >
                             <LayoutDashboard size={14} />
                           </Link>
