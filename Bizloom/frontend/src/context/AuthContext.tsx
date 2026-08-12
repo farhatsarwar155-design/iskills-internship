@@ -9,6 +9,7 @@ export interface User {
   email: string;
   name: string;
   role: 'ADMIN' | 'MANAGER' | 'EMPLOYEE' | 'ACCOUNTANT';
+  lastLogin?: string;
 }
 
 interface AuthContextType {
@@ -17,7 +18,8 @@ interface AuthContextType {
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
-  register: (email: string, password: string, name: string, role: string) => Promise<void>;
+  register: (email: string, password: string, name: string, role: string) => Promise<any>;
+  verifyOTP: (email: string, otp: string) => Promise<any>;
   logout: () => Promise<void>;
 }
 
@@ -95,15 +97,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const login = async (email: string, password: string) => {
     setIsLoading(true);
+    setAccessToken('');
     try {
       const response = await api.post('/auth/login', { email, password });
       const { token: newAccessToken, user: loggedUser } = response.data;
       setToken(newAccessToken);
       setAccessToken(newAccessToken);
       setUser(loggedUser);
-      router.push('/dashboard');
+      if (typeof window !== 'undefined') {
+        window.location.href = '/dashboard';
+      }
     } catch (error: any) {
-      throw new Error(error.response?.data?.message || 'Login failed');
+      const errRes = error.response?.data;
+      if (errRes?.code === 'EMAIL_UNVERIFIED') {
+        const err = new Error(errRes.message || 'Email address unverified') as any;
+        err.email = errRes.email;
+        err.mockOtp = errRes.mockOtp;
+        err.isUnverified = true;
+        throw err;
+      }
+      throw new Error(errRes?.message || 'Login failed');
     } finally {
       setIsLoading(false);
     }
@@ -112,9 +125,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const register = async (email: string, password: string, name: string, role: string) => {
     setIsLoading(true);
     try {
-      await api.post('/auth/register', { email, password, name, role });
+      const response = await api.post('/auth/register', { email, password, name, role });
+      return response.data;
     } catch (error: any) {
       throw new Error(error.response?.data?.message || 'Registration failed');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const verifyOTP = async (email: string, otp: string) => {
+    setIsLoading(true);
+    try {
+      const response = await api.post('/auth/verify-otp', { email, otp });
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.message || 'OTP Verification failed');
     } finally {
       setIsLoading(false);
     }
@@ -128,7 +154,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.error('Logout request failed', error);
     } finally {
       handleLogoutState();
-      router.push('/login');
+      if (typeof window !== 'undefined') {
+        window.location.href = '/login';
+      }
     }
   };
 
@@ -141,6 +169,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         isLoading,
         login,
         register,
+        verifyOTP,
         logout,
       }}
     >

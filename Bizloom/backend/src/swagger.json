@@ -1,0 +1,220 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Bizloom ERP API",
+    "description": "API documentation for Bizloom ERP Backend",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:5000/api",
+      "description": "Local Development Server"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    },
+    "schemas": {
+      "LoginRequest": {
+        "type": "object",
+        "required": ["email", "password"],
+        "properties": {
+          "email": { "type": "string", "example": "admin@bizloom.com" },
+          "password": { "type": "string", "example": "password123" }
+        }
+      },
+      "LoginResponse": {
+        "type": "object",
+        "properties": {
+          "token": { "type": "string" },
+          "user": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string" },
+              "email": { "type": "string" },
+              "role": { "type": "string" },
+              "name": { "type": "string" }
+            }
+          }
+        }
+      },
+      "Product": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "sku": { "type": "string" },
+          "name": { "type": "string" },
+          "quantity": { "type": "number" },
+          "price": { "type": "number" },
+          "cost": { "type": "number" },
+          "minStockLevel": { "type": "number" }
+        }
+      },
+      "Order": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "orderNumber": { "type": "string" },
+          "status": { "type": "string" },
+          "total": { "type": "number" },
+          "customerId": { "type": "string" }
+        }
+      },
+      "PurchaseOrder": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "poNumber": { "type": "string" },
+          "status": { "type": "string" },
+          "total": { "type": "number" }
+        }
+      },
+      "Employee": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "name": { "type": "string" },
+          "position": { "type": "string" },
+          "salary": { "type": "number" }
+        }
+      },
+      "Transaction": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "amount": { "type": "number" },
+          "type": { "type": "string", "enum": ["INCOME", "EXPENSE"] },
+          "category": { "type": "string" }
+        }
+      }
+    }
+  },
+  "security": [
+    { "bearerAuth": [] }
+  ],
+  "paths": {
+    "/auth/login": {
+      "post": {
+        "tags": ["Authentication"],
+        "summary": "User Login",
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": { "schema": { "$ref": "#/components/schemas/LoginRequest" } }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful login",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/LoginResponse" } } }
+          }
+        }
+      }
+    },
+    "/auth/profile": {
+      "get": {
+        "tags": ["Authentication"],
+        "summary": "Get User Profile",
+        "responses": {
+          "200": { "description": "Profile data" }
+        }
+      }
+    },
+    "/inventory": {
+      "get": {
+        "tags": ["Inventory"],
+        "summary": "List all products",
+        "responses": {
+          "200": {
+            "description": "Array of products",
+            "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/Product" } } } }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Inventory"],
+        "summary": "Create a new product",
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Product" } } }
+        },
+        "responses": {
+          "201": { "description": "Product created" }
+        }
+      }
+    },
+    "/sales": {
+      "get": {
+        "tags": ["Sales"],
+        "summary": "List all sales orders",
+        "responses": {
+          "200": { "description": "Array of orders" }
+        }
+      },
+      "post": {
+        "tags": ["Sales"],
+        "summary": "Create a new sale",
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Order" } } }
+        },
+        "responses": {
+          "201": { "description": "Order created" }
+        }
+      }
+    },
+    "/purchases": {
+      "get": {
+        "tags": ["Purchases"],
+        "summary": "List all purchase orders",
+        "responses": {
+          "200": { "description": "Array of purchase orders" }
+        }
+      },
+      "post": {
+        "tags": ["Purchases"],
+        "summary": "Create a new purchase order",
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/PurchaseOrder" } } }
+        },
+        "responses": {
+          "201": { "description": "PO created" }
+        }
+      }
+    },
+    "/hr/employees": {
+      "get": {
+        "tags": ["HR"],
+        "summary": "List all employees",
+        "responses": {
+          "200": { "description": "Array of employees" }
+        }
+      }
+    },
+    "/finance/transactions": {
+      "get": {
+        "tags": ["Finance"],
+        "summary": "List all transactions",
+        "responses": {
+          "200": { "description": "Array of transactions" }
+        }
+      }
+    },
+    "/dashboard/health": {
+      "get": {
+        "tags": ["Dashboard"],
+        "summary": "Get Business Health Score",
+        "responses": {
+          "200": { "description": "Score and AI summary" }
+        }
+      }
+    }
+  }
+}

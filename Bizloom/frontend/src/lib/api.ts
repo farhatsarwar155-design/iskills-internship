@@ -51,6 +51,14 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
+    // Handle 403 Forbidden
+    if (error.response?.status === 403) {
+      if (typeof window !== 'undefined' && !originalRequest.url?.includes('/auth/refresh')) {
+        window.location.href = '/access-denied';
+      }
+      return Promise.reject(error);
+    }
+
     // If 401 and not already retried
     if (error.response?.status === 401 && !originalRequest._retry) {
       // Don't try to refresh if the original request was the login or refresh request itself

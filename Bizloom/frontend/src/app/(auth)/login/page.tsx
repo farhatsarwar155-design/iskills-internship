@@ -35,7 +35,14 @@ export default function LoginPage() {
       await login(email, password);
       toast.success('Successfully logged in!');
     } catch (error: any) {
-      toast.error(error.message || 'Invalid email or password');
+      if (error.isUnverified) {
+        toast.error('Account unverified. Redirecting to OTP verification...');
+        setTimeout(() => {
+          router.push('/register');
+        }, 1000);
+      } else {
+        toast.error(error.message || 'Invalid email or password');
+      }
     } finally {
       setSubmitting(false);
     }

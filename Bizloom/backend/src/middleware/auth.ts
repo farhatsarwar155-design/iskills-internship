@@ -52,3 +52,35 @@ export const requireRoles = (allowedRoles: string[]) => {
     next();
   };
 };
+
+export const auditLogger = (moduleName: string) => {
+  return (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    const method = req.method;
+    if (['POST', 'PUT', 'DELETE', 'PATCH'].includes(method)) {
+      let action = 'UNKNOWN';
+      if (method === 'POST') action = `CREATE_RECORD`;
+      if (method === 'PUT' || method === 'PATCH') action = `UPDATE_RECORD`;
+      if (method === 'DELETE') action = `DELETE_RECORD`;
+
+      res.on('finish', () => {
+        const userId = req.user?.id;
+        const userEmail = req.user?.email;
+        const ipAddress = req.ip;
+
+        import('../utils/logger').then(({ logAction }) => {
+          logAction({
+            userId,
+            userEmail,
+            action,
+            module: moduleName,
+            description: `${method} ${req.originalUrl} - Status: ${res.statusCode}`,
+            ipAddress,
+            severity: res.statusCode >= 400 ? 'WARNING' : 'INFO'
+          });
+        }).catch(err => console.error('Error importing logger:', err));
+      });
+    }
+    next();
+  };
+};
+

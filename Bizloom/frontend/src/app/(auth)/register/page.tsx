@@ -8,15 +8,21 @@ import { toast } from 'react-hot-toast';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ShieldCheck, Mail, Lock, User, Briefcase, Loader2, ArrowRight } from 'lucide-react';
+import { ShieldCheck, Mail, Lock, User, Briefcase, Loader2, ArrowRight, KeyRound, CheckCircle2, RefreshCw } from 'lucide-react';
 
 export default function RegisterPage() {
+  const [step, setStep] = useState<'REGISTER' | 'OTP'>('REGISTER');
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [role, setRole] = useState('EMPLOYEE');
+  
+  // OTP Verification States
+  const [otpCode, setOtpCode] = useState('');
+  const [mockOtp, setMockOtp] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const { register, isAuthenticated, isLoading } = useAuth();
+  
+  const { register, verifyOTP, isAuthenticated, isLoading } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
@@ -25,7 +31,7 @@ export default function RegisterPage() {
     }
   }, [isAuthenticated, isLoading, router]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleRegisterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name || !email || !password || !role) {
       toast.error('Please fill out all fields');
@@ -34,11 +40,33 @@ export default function RegisterPage() {
 
     setSubmitting(true);
     try {
-      await register(email, password, name, role);
-      toast.success('Registration successful! Please sign in.');
-      router.push('/login');
+      const res = await register(email, password, name, role);
+      setMockOtp(res?.mockOtp || null);
+      setStep('OTP');
+      toast.success('Registration successful! Verification OTP sent.');
     } catch (error: any) {
       toast.error(error.message || 'Registration failed');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleOtpSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!otpCode || otpCode.length < 6) {
+      toast.error('Please enter the full 6-digit OTP verification code');
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      await verifyOTP(email, otpCode);
+      toast.success('Account verified successfully! Redirecting to login...');
+      setTimeout(() => {
+        router.push('/login');
+      }, 1000);
+    } catch (error: any) {
+      toast.error(error.message || 'Verification failed');
     } finally {
       setSubmitting(false);
     }
@@ -78,10 +106,10 @@ export default function RegisterPage() {
 
           <div className="flex flex-wrap gap-3">
             <span className="inline-flex items-center rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-neutral-200 backdrop-blur-md">
-              ✦ Custom Roles config
+              ✦ Any Domain Supported (@gmail, @yahoo, etc.)
             </span>
             <span className="inline-flex items-center rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-neutral-200 backdrop-blur-md">
-              ✦ Secure Password Encryption
+              ✦ 6-Digit OTP Security Verification
             </span>
             <span className="inline-flex items-center rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-neutral-200 backdrop-blur-md">
               ✦ Dark Mode support
@@ -94,7 +122,7 @@ export default function RegisterPage() {
         </div>
       </div>
 
-      {/* Right side: Register form */}
+      {/* Right side: Register or OTP form */}
       <div className="flex flex-1 flex-col justify-center px-4 py-12 sm:px-6 lg:flex-none lg:px-20 xl:px-24 bg-white dark:bg-neutral-900 border-l border-neutral-200/50 dark:border-neutral-800/50">
         <div className="mx-auto w-full max-w-sm lg:w-96">
           <div className="lg:hidden flex items-center gap-2 mb-8">
@@ -104,129 +132,217 @@ export default function RegisterPage() {
             <span className="text-2xl font-extrabold tracking-tight dark:text-white">Bizloom</span>
           </div>
 
-          <div>
-            <h2 className="text-3xl font-bold tracking-tight text-neutral-900 dark:text-white">
-              Create an account
-            </h2>
-            <p className="mt-2 text-sm text-neutral-600 dark:text-neutral-400">
-              Already have an account?{' '}
-              <Link href="/login" className="font-semibold text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300 transition-colors">
-                Sign in
-              </Link>
-            </p>
-          </div>
+          {step === 'REGISTER' ? (
+            <>
+              <div>
+                <h2 className="text-3xl font-bold tracking-tight text-neutral-900 dark:text-white">
+                  Create an account
+                </h2>
+                <p className="mt-2 text-sm text-neutral-600 dark:text-neutral-400">
+                  Already have an account?{' '}
+                  <Link href="/login" className="font-semibold text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300 transition-colors">
+                    Sign in
+                  </Link>
+                </p>
+              </div>
 
-          <div className="mt-8">
-            <Card className="border-0 shadow-none bg-transparent">
-              <form onSubmit={handleSubmit} className="space-y-5">
-                <div>
-                  <label htmlFor="name" className="block text-sm font-semibold leading-6 text-neutral-800 dark:text-neutral-200">
-                    Full Name
-                  </label>
-                  <div className="relative mt-2 rounded-md shadow-sm">
-                    <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                      <User className="h-5 w-5 text-neutral-400 dark:text-neutral-500" aria-hidden="true" />
+              <div className="mt-8">
+                <Card className="border-0 shadow-none bg-transparent">
+                  <form onSubmit={handleRegisterSubmit} className="space-y-5">
+                    <div>
+                      <label htmlFor="name" className="block text-sm font-semibold leading-6 text-neutral-800 dark:text-neutral-200">
+                        Full Name
+                      </label>
+                      <div className="relative mt-2 rounded-md shadow-sm">
+                        <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                          <User className="h-5 w-5 text-neutral-400 dark:text-neutral-500" />
+                        </div>
+                        <Input
+                          id="name"
+                          name="name"
+                          type="text"
+                          required
+                          placeholder="Farhat Sarwar"
+                          value={name}
+                          onChange={(e) => setName(e.target.value)}
+                          className="pl-10 h-11 rounded-xl bg-slate-50 dark:bg-neutral-950 border-neutral-200 dark:border-neutral-800 focus-visible:ring-indigo-600 focus-visible:ring-2"
+                        />
+                      </div>
                     </div>
-                    <Input
-                      id="name"
-                      name="name"
-                      type="text"
-                      required
-                      placeholder="John Doe"
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      className="pl-10 h-11 rounded-xl bg-slate-50 dark:bg-neutral-950 border-neutral-200 dark:border-neutral-800 focus-visible:ring-indigo-600 focus-visible:ring-2 focus-visible:border-transparent transition-all duration-150"
-                    />
-                  </div>
-                </div>
 
-                <div>
-                  <label htmlFor="email" className="block text-sm font-semibold leading-6 text-neutral-800 dark:text-neutral-200">
-                    Email address
-                  </label>
-                  <div className="relative mt-2 rounded-md shadow-sm">
-                    <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                      <Mail className="h-5 w-5 text-neutral-400 dark:text-neutral-500" aria-hidden="true" />
+                    <div>
+                      <label htmlFor="email" className="block text-sm font-semibold leading-6 text-neutral-800 dark:text-neutral-200">
+                        Email address
+                      </label>
+                      <div className="relative mt-2 rounded-md shadow-sm">
+                        <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                          <Mail className="h-5 w-5 text-neutral-400 dark:text-neutral-500" />
+                        </div>
+                        <Input
+                          id="email"
+                          name="email"
+                          type="email"
+                          required
+                          placeholder="anyname@gmail.com, yahoo.com, etc."
+                          value={email}
+                          onChange={(e) => setEmail(e.target.value)}
+                          className="pl-10 h-11 rounded-xl bg-slate-50 dark:bg-neutral-950 border-neutral-200 dark:border-neutral-800 focus-visible:ring-indigo-600 focus-visible:ring-2"
+                        />
+                      </div>
                     </div>
-                    <Input
-                      id="email"
-                      name="email"
-                      type="email"
-                      required
-                      placeholder="you@example.com"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      className="pl-10 h-11 rounded-xl bg-slate-50 dark:bg-neutral-950 border-neutral-200 dark:border-neutral-800 focus-visible:ring-indigo-600 focus-visible:ring-2 focus-visible:border-transparent transition-all duration-150"
-                    />
-                  </div>
-                </div>
 
-                <div>
-                  <label htmlFor="password" className="block text-sm font-semibold leading-6 text-neutral-800 dark:text-neutral-200">
-                    Password
-                  </label>
-                  <div className="relative mt-2 rounded-md shadow-sm">
-                    <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                      <Lock className="h-5 w-5 text-neutral-400 dark:text-neutral-500" aria-hidden="true" />
+                    <div>
+                      <label htmlFor="password" className="block text-sm font-semibold leading-6 text-neutral-800 dark:text-neutral-200">
+                        Password
+                      </label>
+                      <div className="relative mt-2 rounded-md shadow-sm">
+                        <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                          <Lock className="h-5 w-5 text-neutral-400 dark:text-neutral-500" />
+                        </div>
+                        <Input
+                          id="password"
+                          name="password"
+                          type="password"
+                          required
+                          placeholder="••••••••"
+                          value={password}
+                          onChange={(e) => setPassword(e.target.value)}
+                          className="pl-10 h-11 rounded-xl bg-slate-50 dark:bg-neutral-950 border-neutral-200 dark:border-neutral-800 focus-visible:ring-indigo-600 focus-visible:ring-2"
+                        />
+                      </div>
                     </div>
-                    <Input
-                      id="password"
-                      name="password"
-                      type="password"
-                      required
-                      placeholder="••••••••"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      className="pl-10 h-11 rounded-xl bg-slate-50 dark:bg-neutral-950 border-neutral-200 dark:border-neutral-800 focus-visible:ring-indigo-600 focus-visible:ring-2 focus-visible:border-transparent transition-all duration-150"
-                    />
-                  </div>
-                </div>
 
-                <div>
-                  <label htmlFor="role" className="block text-sm font-semibold leading-6 text-neutral-800 dark:text-neutral-200">
-                    Organization Role
-                  </label>
-                  <div className="relative mt-2 rounded-md shadow-sm">
-                    <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                      <Briefcase className="h-5 w-5 text-neutral-400 dark:text-neutral-500" aria-hidden="true" />
+                    <div>
+                      <label htmlFor="role" className="block text-sm font-semibold leading-6 text-neutral-800 dark:text-neutral-200">
+                        Organization Role
+                      </label>
+                      <div className="relative mt-2 rounded-md shadow-sm">
+                        <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                          <Briefcase className="h-5 w-5 text-neutral-400 dark:text-neutral-500" />
+                        </div>
+                        <select
+                          id="role"
+                          name="role"
+                          value={role}
+                          onChange={(e) => setRole(e.target.value)}
+                          className="flex h-11 w-full rounded-xl border border-neutral-200 bg-slate-50 pl-10 pr-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-indigo-600 dark:border-neutral-800 dark:bg-neutral-950 dark:text-neutral-200 font-semibold"
+                        >
+                          <option value="EMPLOYEE">Employee</option>
+                          <option value="MANAGER">Manager</option>
+                          <option value="ACCOUNTANT">Accountant</option>
+                          <option value="ADMIN">Admin</option>
+                        </select>
+                      </div>
                     </div>
-                    <select
-                      id="role"
-                      name="role"
-                      value={role}
-                      onChange={(e) => setRole(e.target.value)}
-                      className="flex h-11 w-full rounded-xl border border-neutral-200 bg-slate-50 pl-10 pr-3 py-2 text-sm ring-offset-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600 focus-visible:border-transparent dark:border-neutral-800 dark:bg-neutral-950 dark:ring-offset-neutral-950 dark:text-neutral-200 select-custom transition-all duration-150 font-semibold"
-                    >
-                      <option value="EMPLOYEE">Employee</option>
-                      <option value="MANAGER">Manager</option>
-                      <option value="ACCOUNTANT">Accountant</option>
-                      <option value="ADMIN">Admin</option>
-                    </select>
-                  </div>
-                </div>
 
-                <div className="pt-2">
-                  <Button
-                    type="submit"
-                    disabled={submitting}
-                    className="w-full h-11 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/20 dark:bg-indigo-500 dark:hover:bg-indigo-400 dark:shadow-none hover:scale-[1.01] active:scale-[0.99] transition-all duration-150"
-                  >
-                    {submitting ? (
-                      <>
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                        Creating account...
-                      </>
-                    ) : (
-                      <>
-                        Register
-                        <ArrowRight className="h-4 w-4" />
-                      </>
-                    )}
-                  </Button>
+                    <div className="pt-2">
+                      <Button
+                        type="submit"
+                        disabled={submitting}
+                        className="w-full h-11 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/20"
+                      >
+                        {submitting ? (
+                          <>
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            Sending OTP...
+                          </>
+                        ) : (
+                          <>
+                            Register Account
+                            <ArrowRight className="h-4 w-4" />
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                  </form>
+                </Card>
+              </div>
+            </>
+          ) : (
+            <>
+              <div>
+                <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 mb-4">
+                  <KeyRound className="h-6 w-6" />
                 </div>
-              </form>
-            </Card>
-          </div>
+                <h2 className="text-3xl font-bold tracking-tight text-neutral-900 dark:text-white">
+                  Verify OTP Code
+                </h2>
+                <p className="mt-2 text-sm text-neutral-600 dark:text-neutral-400">
+                  Enter the 6-digit code sent to <span className="font-semibold text-neutral-900 dark:text-neutral-100">{email}</span>
+                </p>
+              </div>
+
+              {/* Sandbox mock OTP banner */}
+              {mockOtp && (
+                <div className="mt-4 p-3.5 bg-indigo-500/10 border border-indigo-500/30 rounded-xl text-xs flex items-center justify-between text-indigo-700 dark:text-indigo-300">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="h-4 w-4 text-indigo-600 dark:text-indigo-400 shrink-0" />
+                    <span><strong>Sandbox Mock OTP:</strong> Check code below</span>
+                  </div>
+                  <span className="font-mono font-bold text-sm bg-indigo-600 text-white px-2 py-0.5 rounded-lg shadow-sm">
+                    {mockOtp}
+                  </span>
+                </div>
+              )}
+
+              <div className="mt-6">
+                <Card className="border-0 shadow-none bg-transparent">
+                  <form onSubmit={handleOtpSubmit} className="space-y-5">
+                    <div>
+                      <label htmlFor="otpCode" className="block text-sm font-semibold leading-6 text-neutral-800 dark:text-neutral-200">
+                        6-Digit Verification Code
+                      </label>
+                      <div className="relative mt-2 rounded-md shadow-sm">
+                        <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                          <KeyRound className="h-5 w-5 text-neutral-400 dark:text-neutral-500" />
+                        </div>
+                        <Input
+                          id="otpCode"
+                          name="otpCode"
+                          type="text"
+                          maxLength={6}
+                          required
+                          placeholder="123456"
+                          value={otpCode}
+                          onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ''))}
+                          className="pl-10 h-12 text-lg tracking-[0.3em] font-mono rounded-xl bg-slate-50 dark:bg-neutral-950 border-neutral-200 dark:border-neutral-800 focus-visible:ring-indigo-600"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="pt-2 space-y-3">
+                      <Button
+                        type="submit"
+                        disabled={submitting || otpCode.length < 6}
+                        className="w-full h-11 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/20"
+                      >
+                        {submitting ? (
+                          <>
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            Verifying...
+                          </>
+                        ) : (
+                          <>
+                            Verify & Activate Account
+                            <CheckCircle2 className="h-4 w-4" />
+                          </>
+                        )}
+                      </Button>
+
+                      <button
+                        type="button"
+                        onClick={() => setStep('REGISTER')}
+                        className="w-full text-xs text-center text-neutral-500 hover:text-neutral-800 dark:hover:text-neutral-300 py-1 transition-colors flex items-center justify-center gap-1"
+                      >
+                        <RefreshCw className="h-3 w-3" />
+                        Back to Register Form
+                      </button>
+                    </div>
+                  </form>
+                </Card>
+              </div>
+            </>
+          )}
         </div>
       </div>
     </div>
