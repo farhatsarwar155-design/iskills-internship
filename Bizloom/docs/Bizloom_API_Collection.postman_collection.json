@@ -1,7 +1,7 @@
 {
   "item": [
     {
-      "id": "130b38ec-9977-412c-963d-36144fa5cef6",
+      "id": "4735e4b4-89b9-4af8-acc8-e378011eff49",
       "name": "Authentication",
       "description": {
         "content": "",
@@ -9,11 +9,14 @@
       },
       "item": [
         {
-          "id": "ba5a9b5f-8dc1-49c7-aa3c-cef2353411e7",
+          "id": "97fbe8fa-8d8e-4825-ba5e-20ebf3009c45",
           "name": "User Login",
           "request": {
             "name": "User Login",
-            "description": {},
+            "description": {
+              "content": "Authenticate a user with email and password. Returns a JWT token and user profile. The token must be included in the Authorization header for all subsequent requests.",
+              "type": "text/plain"
+            },
             "url": {
               "path": [
                 "auth",
@@ -39,7 +42,7 @@
             "auth": null,
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"<string>\",\n  \"password\": \"<string>\"\n}",
+              "raw": "{\n  \"email\": \"<email>\",\n  \"password\": \"<password>\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -49,8 +52,8 @@
           },
           "response": [
             {
-              "id": "3fb11ef7-7b41-4bfa-b4de-ea5a424f176f",
-              "name": "Successful login",
+              "id": "3a7d5275-15f5-4eac-a5a4-1a27425ac47e",
+              "name": "Login successful — returns JWT token and user profile",
               "originalRequest": {
                 "url": {
                   "path": [
@@ -96,45 +99,18 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"token\": \"string\",\n  \"user\": {\n    \"id\": \"string\",\n    \"email\": \"string\",\n    \"role\": \"string\",\n    \"name\": \"string\"\n  }\n}",
+              "body": "{\n  \"token\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJjbHIxMjM0NTY3ODkiLCJyb2xlIjoiQURNSU4iLCJpYXQiOjE3MjM3NDQ0MDB9.abc123\",\n  \"user\": {\n    \"id\": \"clr1234567890abcdef\",\n    \"email\": \"admin@bizloom.com\",\n    \"role\": \"ADMIN\",\n    \"name\": \"Farhat Sarwar\",\n    \"lastLogin\": \"2026-08-15T09:30:00.000Z\"\n  }\n}",
               "cookie": [],
               "_postman_previewlanguage": "json"
-            }
-          ],
-          "event": [],
-          "protocolProfileBehavior": {
-            "disableBodyPruning": true
-          }
-        },
-        {
-          "id": "0b21f9e6-150a-4dd2-9bf7-aa19ac856ca6",
-          "name": "Get User Profile",
-          "request": {
-            "name": "Get User Profile",
-            "description": {},
-            "url": {
-              "path": [
-                "auth",
-                "profile"
-              ],
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "query": [],
-              "variable": []
             },
-            "method": "GET",
-            "auth": null
-          },
-          "response": [
             {
-              "id": "fb6aaeab-a0d5-45d0-a1a4-ace7e4dd0636",
-              "name": "Profile data",
+              "id": "ed778004-41a7-4f21-aab2-407ff17ce345",
+              "name": "Invalid email or password",
               "originalRequest": {
                 "url": {
                   "path": [
                     "auth",
-                    "profile"
+                    "login"
                   ],
                   "host": [
                     "{{baseUrl}}"
@@ -152,11 +128,19 @@
                     "value": "Bearer <token>"
                   }
                 ],
-                "method": "GET",
-                "body": {}
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"admin@bizloom.com\",\n  \"password\": \"password123\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
               },
-              "status": "OK",
-              "code": 200,
+              "status": "Unauthorized",
+              "code": 401,
               "header": [
                 {
                   "key": "Content-Type",
@@ -172,27 +156,20 @@
           "protocolProfileBehavior": {
             "disableBodyPruning": true
           }
-        }
-      ],
-      "event": []
-    },
-    {
-      "id": "afbf5a0e-2e3a-474d-94a8-ac3ff5e0b468",
-      "name": "Inventory",
-      "description": {
-        "content": "",
-        "type": "text/plain"
-      },
-      "item": [
+        },
         {
-          "id": "be16b13a-f4b4-4bc1-9053-6ac0c41f32cc",
-          "name": "List all products",
+          "id": "6f6854a0-d8aa-445d-a205-8ba74889243f",
+          "name": "Get Current User Profile",
           "request": {
-            "name": "List all products",
-            "description": {},
+            "name": "Get Current User Profile",
+            "description": {
+              "content": "Returns the authenticated user's profile including role, name, email, and last login timestamp.",
+              "type": "text/plain"
+            },
             "url": {
               "path": [
-                "inventory"
+                "auth",
+                "profile"
               ],
               "host": [
                 "{{baseUrl}}"
@@ -211,12 +188,13 @@
           },
           "response": [
             {
-              "id": "c90584e7-38f9-4a50-9e14-6a94494e959e",
-              "name": "Array of products",
+              "id": "c60ba977-b48f-4038-a34e-275fb5afcec5",
+              "name": "Authenticated user profile",
               "originalRequest": {
                 "url": {
                   "path": [
-                    "inventory"
+                    "auth",
+                    "profile"
                   ],
                   "host": [
                     "{{baseUrl}}"
@@ -249,7 +227,148 @@
                   "value": "application/json"
                 }
               ],
-              "body": "[\n  {\n    \"id\": \"string\",\n    \"sku\": \"string\",\n    \"name\": \"string\",\n    \"quantity\": 8191.8538740283,\n    \"price\": 1050.3675105514221,\n    \"cost\": 604.1870827722573,\n    \"minStockLevel\": 5577.34109100777\n  },\n  {\n    \"id\": \"string\",\n    \"sku\": \"string\",\n    \"name\": \"string\",\n    \"quantity\": 5104.120355804499,\n    \"price\": 7102.322717401621,\n    \"cost\": 8140.04613544851,\n    \"minStockLevel\": 267.24323867539647\n  }\n]",
+              "body": "{\n  \"id\": \"clr1234567890abcdef\",\n  \"email\": \"admin@bizloom.com\",\n  \"name\": \"Farhat Sarwar\",\n  \"role\": \"ADMIN\",\n  \"lastLogin\": \"2026-08-15T09:30:00.000Z\"\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "83942adc-677f-438e-8c06-f9365e0e08bb",
+              "name": "Not authenticated — token missing or expired",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "auth",
+                    "profile"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  }
+                ],
+                "method": "GET",
+                "body": {}
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "text/plain"
+                }
+              ],
+              "body": "",
+              "cookie": [],
+              "_postman_previewlanguage": "text"
+            }
+          ],
+          "event": [],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          }
+        }
+      ],
+      "event": []
+    },
+    {
+      "id": "df2d881a-56a8-4762-9e1a-5cd3940e2c54",
+      "name": "Inventory",
+      "description": {
+        "content": "",
+        "type": "text/plain"
+      },
+      "item": [
+        {
+          "id": "10f244fb-f796-4d8b-b41f-1b39c68a8a86",
+          "name": "List All Products",
+          "request": {
+            "name": "List All Products",
+            "description": {
+              "content": "Retrieve the full product catalog with stock quantities, pricing, and category info. Supports search via query parameter.",
+              "type": "text/plain"
+            },
+            "url": {
+              "path": [
+                "inventory"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [
+                {
+                  "disabled": false,
+                  "key": "search",
+                  "value": "<string>",
+                  "description": "Filter products by name or SKU"
+                }
+              ],
+              "variable": []
+            },
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "method": "GET",
+            "auth": null
+          },
+          "response": [
+            {
+              "id": "5d9ca0a5-e0c6-4ffb-921c-d67b57bd4195",
+              "name": "Array of inventory products",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "inventory"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [
+                    {
+                      "key": "search",
+                      "value": "keyboard"
+                    }
+                  ],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "GET",
+                "body": {}
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "[\n  {\n    \"id\": \"clr_prod_001abc\",\n    \"sku\": \"KB-RGB-MK1\",\n    \"name\": \"Mechanical Keyboard RGB\",\n    \"description\": \"Full-size mechanical keyboard with Cherry MX Blue switches and per-key RGB lighting\",\n    \"quantity\": 15,\n    \"price\": 99.99,\n    \"cost\": 45,\n    \"minStockLevel\": 5,\n    \"category\": \"Peripherals\",\n    \"createdAt\": \"2026-06-15T10:30:00.000Z\",\n    \"updatedAt\": \"2026-08-12T14:22:00.000Z\"\n  },\n  {\n    \"id\": \"clr_prod_001abc\",\n    \"sku\": \"KB-RGB-MK1\",\n    \"name\": \"Mechanical Keyboard RGB\",\n    \"description\": \"Full-size mechanical keyboard with Cherry MX Blue switches and per-key RGB lighting\",\n    \"quantity\": 15,\n    \"price\": 99.99,\n    \"cost\": 45,\n    \"minStockLevel\": 5,\n    \"category\": \"Peripherals\",\n    \"createdAt\": \"2026-06-15T10:30:00.000Z\",\n    \"updatedAt\": \"2026-08-12T14:22:00.000Z\"\n  }\n]",
               "cookie": [],
               "_postman_previewlanguage": "json"
             }
@@ -260,11 +379,14 @@
           }
         },
         {
-          "id": "f236af5e-af03-47cb-a716-cff468ff20f2",
-          "name": "Create a new product",
+          "id": "cf4bc588-aaa9-423d-b0a3-a0214944f32d",
+          "name": "Create New Product",
           "request": {
-            "name": "Create a new product",
-            "description": {},
+            "name": "Create New Product",
+            "description": {
+              "content": "Add a new product to the inventory catalog. Requires Admin or Manager role.",
+              "type": "text/plain"
+            },
             "url": {
               "path": [
                 "inventory"
@@ -279,13 +401,17 @@
               {
                 "key": "Content-Type",
                 "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
               }
             ],
             "method": "POST",
             "auth": null,
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"id\": \"<string>\",\n  \"sku\": \"<string>\",\n  \"name\": \"<string>\",\n  \"quantity\": \"<number>\",\n  \"price\": \"<number>\",\n  \"cost\": \"<number>\",\n  \"minStockLevel\": \"<number>\"\n}",
+              "raw": "{\n  \"sku\": \"<string>\",\n  \"name\": \"<string>\",\n  \"quantity\": \"<integer>\",\n  \"price\": \"<float>\",\n  \"cost\": \"<float>\",\n  \"minStockLevel\": \"<integer>\",\n  \"description\": \"<string>\",\n  \"category\": \"<string>\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -295,8 +421,59 @@
           },
           "response": [
             {
-              "id": "82850f85-a361-4db3-8b8b-ee6d61314e3d",
-              "name": "Product created",
+              "id": "59e3fbca-d16e-46cc-a6ac-7a7852236e65",
+              "name": "Product created successfully",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "inventory"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"sku\": \"MS-WL-PRO\",\n  \"name\": \"Wireless Mouse Pro\",\n  \"quantity\": 50,\n  \"price\": 59.99,\n  \"cost\": 22.5,\n  \"minStockLevel\": 10,\n  \"description\": \"Ergonomic wireless mouse with 16000 DPI sensor and USB-C charging\",\n  \"category\": \"Peripherals\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"id\": \"clr_prod_001abc\",\n  \"sku\": \"KB-RGB-MK1\",\n  \"name\": \"Mechanical Keyboard RGB\",\n  \"description\": \"Full-size mechanical keyboard with Cherry MX Blue switches and per-key RGB lighting\",\n  \"quantity\": 15,\n  \"price\": 99.99,\n  \"cost\": 45,\n  \"minStockLevel\": 5,\n  \"category\": \"Peripherals\",\n  \"createdAt\": \"2026-06-15T10:30:00.000Z\",\n  \"updatedAt\": \"2026-08-12T14:22:00.000Z\"\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "4e18e63f-3ea7-4e5d-bf7c-7e623bbf1a42",
+              "name": "Validation error — missing required fields or duplicate SKU",
               "originalRequest": {
                 "url": {
                   "path": [
@@ -321,7 +498,7 @@
                 "method": "POST",
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"id\": \"<string>\",\n  \"sku\": \"<string>\",\n  \"name\": \"<string>\",\n  \"quantity\": \"<number>\",\n  \"price\": \"<number>\",\n  \"cost\": \"<number>\",\n  \"minStockLevel\": \"<number>\"\n}",
+                  "raw": "{\n  \"sku\": \"MS-WL-PRO\",\n  \"name\": \"Wireless Mouse Pro\",\n  \"quantity\": 50,\n  \"price\": 59.99,\n  \"cost\": 22.5,\n  \"minStockLevel\": 10,\n  \"description\": \"Ergonomic wireless mouse with 16000 DPI sensor and USB-C charging\",\n  \"category\": \"Peripherals\"\n}",
                   "options": {
                     "raw": {
                       "language": "json"
@@ -329,8 +506,362 @@
                   }
                 }
               },
-              "status": "Created",
-              "code": 201,
+              "status": "Bad Request",
+              "code": 400,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "text/plain"
+                }
+              ],
+              "body": "",
+              "cookie": [],
+              "_postman_previewlanguage": "text"
+            },
+            {
+              "id": "8e7429c1-7026-4ea8-a40b-363ae2daa05a",
+              "name": "Forbidden — insufficient role permissions",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "inventory"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  }
+                ],
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"sku\": \"MS-WL-PRO\",\n  \"name\": \"Wireless Mouse Pro\",\n  \"quantity\": 50,\n  \"price\": 59.99,\n  \"cost\": 22.5,\n  \"minStockLevel\": 10,\n  \"description\": \"Ergonomic wireless mouse with 16000 DPI sensor and USB-C charging\",\n  \"category\": \"Peripherals\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Forbidden",
+              "code": 403,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "text/plain"
+                }
+              ],
+              "body": "",
+              "cookie": [],
+              "_postman_previewlanguage": "text"
+            }
+          ],
+          "event": [],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          }
+        },
+        {
+          "id": "75ca028c-3e7f-4b7d-85de-ef28ca1e7f26",
+          "name": "Update Product",
+          "request": {
+            "name": "Update Product",
+            "description": {
+              "content": "Update an existing product's details (name, price, stock level, etc.).",
+              "type": "text/plain"
+            },
+            "url": {
+              "path": [
+                "inventory",
+                ":id"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "disabled": false,
+                  "type": "any",
+                  "value": "<string>",
+                  "key": "id",
+                  "description": "(Required) "
+                }
+              ]
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "method": "PUT",
+            "auth": null,
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sku\": \"<string>\",\n  \"name\": \"<string>\",\n  \"quantity\": \"<integer>\",\n  \"price\": \"<float>\",\n  \"cost\": \"<float>\",\n  \"minStockLevel\": \"<integer>\",\n  \"description\": \"<string>\",\n  \"category\": \"<string>\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "id": "76b9aa91-aa30-4041-b851-5aece7a2c729",
+              "name": "Product updated successfully",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "inventory",
+                    ":id"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<string>",
+                      "key": "id",
+                      "description": "(Required) "
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "PUT",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"sku\": \"MS-WL-PRO\",\n  \"name\": \"Wireless Mouse Pro\",\n  \"quantity\": 50,\n  \"price\": 59.99,\n  \"cost\": 22.5,\n  \"minStockLevel\": 10,\n  \"description\": \"Ergonomic wireless mouse with 16000 DPI sensor and USB-C charging\",\n  \"category\": \"Peripherals\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"id\": \"clr_prod_001abc\",\n  \"sku\": \"KB-RGB-MK1\",\n  \"name\": \"Mechanical Keyboard RGB\",\n  \"description\": \"Full-size mechanical keyboard with Cherry MX Blue switches and per-key RGB lighting\",\n  \"quantity\": 15,\n  \"price\": 99.99,\n  \"cost\": 45,\n  \"minStockLevel\": 5,\n  \"category\": \"Peripherals\",\n  \"createdAt\": \"2026-06-15T10:30:00.000Z\",\n  \"updatedAt\": \"2026-08-12T14:22:00.000Z\"\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "e0352b4b-8b99-438b-8928-da473de4131f",
+              "name": "Product not found",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "inventory",
+                    ":id"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<string>",
+                      "key": "id",
+                      "description": "(Required) "
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  }
+                ],
+                "method": "PUT",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"sku\": \"MS-WL-PRO\",\n  \"name\": \"Wireless Mouse Pro\",\n  \"quantity\": 50,\n  \"price\": 59.99,\n  \"cost\": 22.5,\n  \"minStockLevel\": 10,\n  \"description\": \"Ergonomic wireless mouse with 16000 DPI sensor and USB-C charging\",\n  \"category\": \"Peripherals\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Not Found",
+              "code": 404,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "text/plain"
+                }
+              ],
+              "body": "",
+              "cookie": [],
+              "_postman_previewlanguage": "text"
+            }
+          ],
+          "event": [],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          }
+        },
+        {
+          "id": "48804c04-55ef-4b5b-ba01-358b7e8036ed",
+          "name": "Delete Product",
+          "request": {
+            "name": "Delete Product",
+            "description": {
+              "content": "Permanently remove a product from the inventory. Admin only.",
+              "type": "text/plain"
+            },
+            "url": {
+              "path": [
+                "inventory",
+                ":id"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "disabled": false,
+                  "type": "any",
+                  "value": "<string>",
+                  "key": "id",
+                  "description": "(Required) "
+                }
+              ]
+            },
+            "method": "DELETE",
+            "auth": null
+          },
+          "response": [
+            {
+              "id": "f48adca4-8c2d-4056-accb-55ffcb93de09",
+              "name": "Product deleted successfully",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "inventory",
+                    ":id"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<string>",
+                      "key": "id",
+                      "description": "(Required) "
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  }
+                ],
+                "method": "DELETE",
+                "body": {}
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "text/plain"
+                }
+              ],
+              "body": "",
+              "cookie": [],
+              "_postman_previewlanguage": "text"
+            },
+            {
+              "id": "6439410c-15a2-4fa5-87e7-f5f8c41b1cae",
+              "name": "Product not found",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "inventory",
+                    ":id"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<string>",
+                      "key": "id",
+                      "description": "(Required) "
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  }
+                ],
+                "method": "DELETE",
+                "body": {}
+              },
+              "status": "Not Found",
+              "code": 404,
               "header": [
                 {
                   "key": "Content-Type",
@@ -351,7 +882,7 @@
       "event": []
     },
     {
-      "id": "48412a0c-9be6-47e8-9248-9ffb8693f2a9",
+      "id": "415f8399-4f87-4bec-b311-131e6191504d",
       "name": "Sales",
       "description": {
         "content": "",
@@ -359,11 +890,14 @@
       },
       "item": [
         {
-          "id": "b060d1d2-23f7-4879-b52b-2d3d4f2fa233",
-          "name": "List all sales orders",
+          "id": "ddb886c8-0d41-4319-9c02-5bc1865fd076",
+          "name": "List All Sales Orders",
           "request": {
-            "name": "List all sales orders",
-            "description": {},
+            "name": "List All Sales Orders",
+            "description": {
+              "content": "Retrieve all sales orders with customer details, item breakdowns, and payment status.",
+              "type": "text/plain"
+            },
             "url": {
               "path": [
                 "sales"
@@ -374,13 +908,19 @@
               "query": [],
               "variable": []
             },
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
             "method": "GET",
             "auth": null
           },
           "response": [
             {
-              "id": "db90b2e4-0143-4899-b57b-b195513277cc",
-              "name": "Array of orders",
+              "id": "2a9431ab-6abe-46aa-b56f-c0372a093347",
+              "name": "Array of sales orders",
               "originalRequest": {
                 "url": {
                   "path": [
@@ -400,6 +940,10 @@
                     },
                     "key": "Authorization",
                     "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
                   }
                 ],
                 "method": "GET",
@@ -410,12 +954,12 @@
               "header": [
                 {
                   "key": "Content-Type",
-                  "value": "text/plain"
+                  "value": "application/json"
                 }
               ],
-              "body": "",
+              "body": "[\n  {\n    \"id\": \"clr_ord_041xyz\",\n    \"orderNumber\": \"ORD-2026-041\",\n    \"status\": \"PAID\",\n    \"total\": 1240,\n    \"customerId\": \"clr_cust_acme01\",\n    \"customer\": {\n      \"id\": \"clr_cust_acme01\",\n      \"name\": \"Acme Corp\",\n      \"email\": \"orders@acmecorp.com\"\n    },\n    \"items\": [\n      {\n        \"productId\": \"clr_prod_001abc\",\n        \"productName\": \"Mechanical Keyboard RGB\",\n        \"quantity\": 10,\n        \"unitPrice\": 99.99,\n        \"lineTotal\": 999.9\n      },\n      {\n        \"productId\": \"clr_prod_001abc\",\n        \"productName\": \"Mechanical Keyboard RGB\",\n        \"quantity\": 10,\n        \"unitPrice\": 99.99,\n        \"lineTotal\": 999.9\n      }\n    ],\n    \"createdAt\": \"2026-08-14T11:45:00.000Z\"\n  },\n  {\n    \"id\": \"clr_ord_041xyz\",\n    \"orderNumber\": \"ORD-2026-041\",\n    \"status\": \"PAID\",\n    \"total\": 1240,\n    \"customerId\": \"clr_cust_acme01\",\n    \"customer\": {\n      \"id\": \"clr_cust_acme01\",\n      \"name\": \"Acme Corp\",\n      \"email\": \"orders@acmecorp.com\"\n    },\n    \"items\": [\n      {\n        \"productId\": \"clr_prod_001abc\",\n        \"productName\": \"Mechanical Keyboard RGB\",\n        \"quantity\": 10,\n        \"unitPrice\": 99.99,\n        \"lineTotal\": 999.9\n      },\n      {\n        \"productId\": \"clr_prod_001abc\",\n        \"productName\": \"Mechanical Keyboard RGB\",\n        \"quantity\": 10,\n        \"unitPrice\": 99.99,\n        \"lineTotal\": 999.9\n      }\n    ],\n    \"createdAt\": \"2026-08-14T11:45:00.000Z\"\n  }\n]",
               "cookie": [],
-              "_postman_previewlanguage": "text"
+              "_postman_previewlanguage": "json"
             }
           ],
           "event": [],
@@ -424,11 +968,14 @@
           }
         },
         {
-          "id": "4158f53c-8c03-4399-92b6-023b56388a00",
-          "name": "Create a new sale",
+          "id": "d4875654-1703-4bcd-8195-9bb0ca0c68bd",
+          "name": "Create New Sales Order",
           "request": {
-            "name": "Create a new sale",
-            "description": {},
+            "name": "Create New Sales Order",
+            "description": {
+              "content": "Create a new sales invoice. Automatically deducts inventory quantities for each line item.",
+              "type": "text/plain"
+            },
             "url": {
               "path": [
                 "sales"
@@ -443,13 +990,17 @@
               {
                 "key": "Content-Type",
                 "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
               }
             ],
             "method": "POST",
             "auth": null,
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"id\": \"<string>\",\n  \"orderNumber\": \"<string>\",\n  \"status\": \"<string>\",\n  \"total\": \"<number>\",\n  \"customerId\": \"<string>\"\n}",
+              "raw": "{\n  \"customerId\": \"<string>\",\n  \"items\": [\n    {\n      \"productId\": \"<string>\",\n      \"quantity\": \"<integer>\"\n    },\n    {\n      \"productId\": \"<string>\",\n      \"quantity\": \"<integer>\"\n    }\n  ]\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -459,8 +1010,59 @@
           },
           "response": [
             {
-              "id": "9dd82fcd-a3d8-4426-be03-6acec77dd255",
-              "name": "Order created",
+              "id": "40bdcd66-91b3-40fd-9b61-e9fedef2aef4",
+              "name": "Sales order created — inventory quantities deducted automatically",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "sales"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"customerId\": \"clr_cust_acme01\",\n  \"items\": [\n    {\n      \"productId\": \"clr_prod_001abc\",\n      \"quantity\": 10\n    },\n    {\n      \"productId\": \"clr_prod_001abc\",\n      \"quantity\": 10\n    }\n  ]\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"id\": \"clr_ord_041xyz\",\n  \"orderNumber\": \"ORD-2026-041\",\n  \"status\": \"PAID\",\n  \"total\": 1240,\n  \"customerId\": \"clr_cust_acme01\",\n  \"customer\": {\n    \"id\": \"clr_cust_acme01\",\n    \"name\": \"Acme Corp\",\n    \"email\": \"orders@acmecorp.com\"\n  },\n  \"items\": [\n    {\n      \"productId\": \"clr_prod_001abc\",\n      \"productName\": \"Mechanical Keyboard RGB\",\n      \"quantity\": 10,\n      \"unitPrice\": 99.99,\n      \"lineTotal\": 999.9\n    },\n    {\n      \"productId\": \"clr_prod_001abc\",\n      \"productName\": \"Mechanical Keyboard RGB\",\n      \"quantity\": 10,\n      \"unitPrice\": 99.99,\n      \"lineTotal\": 999.9\n    }\n  ],\n  \"createdAt\": \"2026-08-14T11:45:00.000Z\"\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "cdd07680-5266-409a-a59b-f7cc16a849f7",
+              "name": "Validation error — insufficient stock or invalid customer",
               "originalRequest": {
                 "url": {
                   "path": [
@@ -485,7 +1087,7 @@
                 "method": "POST",
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"id\": \"<string>\",\n  \"orderNumber\": \"<string>\",\n  \"status\": \"<string>\",\n  \"total\": \"<number>\",\n  \"customerId\": \"<string>\"\n}",
+                  "raw": "{\n  \"customerId\": \"clr_cust_acme01\",\n  \"items\": [\n    {\n      \"productId\": \"clr_prod_001abc\",\n      \"quantity\": 10\n    },\n    {\n      \"productId\": \"clr_prod_001abc\",\n      \"quantity\": 10\n    }\n  ]\n}",
                   "options": {
                     "raw": {
                       "language": "json"
@@ -493,8 +1095,8 @@
                   }
                 }
               },
-              "status": "Created",
-              "code": 201,
+              "status": "Bad Request",
+              "code": 400,
               "header": [
                 {
                   "key": "Content-Type",
@@ -515,7 +1117,7 @@
       "event": []
     },
     {
-      "id": "56565037-1f43-493a-bcb2-cb0b982ff5e4",
+      "id": "22a4d254-04d8-4ef5-9de9-dac5f5593466",
       "name": "Purchases",
       "description": {
         "content": "",
@@ -523,11 +1125,14 @@
       },
       "item": [
         {
-          "id": "3257ec1b-cfed-4ea2-8de2-773f76707ceb",
-          "name": "List all purchase orders",
+          "id": "790a87b7-7793-4784-87db-471357d41074",
+          "name": "List All Purchase Orders",
           "request": {
-            "name": "List all purchase orders",
-            "description": {},
+            "name": "List All Purchase Orders",
+            "description": {
+              "content": "Retrieve all purchase orders with supplier details, item breakdowns, and delivery status.",
+              "type": "text/plain"
+            },
             "url": {
               "path": [
                 "purchases"
@@ -538,12 +1143,18 @@
               "query": [],
               "variable": []
             },
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
             "method": "GET",
             "auth": null
           },
           "response": [
             {
-              "id": "dbf45327-00d7-4505-bbf4-57c986efd3ca",
+              "id": "e87da94f-432c-4399-b3e1-f61edfebd671",
               "name": "Array of purchase orders",
               "originalRequest": {
                 "url": {
@@ -564,6 +1175,10 @@
                     },
                     "key": "Authorization",
                     "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
                   }
                 ],
                 "method": "GET",
@@ -574,12 +1189,12 @@
               "header": [
                 {
                   "key": "Content-Type",
-                  "value": "text/plain"
+                  "value": "application/json"
                 }
               ],
-              "body": "",
+              "body": "[\n  {\n    \"id\": \"clr_po_018mno\",\n    \"poNumber\": \"PO-2026-018\",\n    \"status\": \"ORDERED\",\n    \"total\": 2250,\n    \"supplierId\": \"clr_sup_techsup01\",\n    \"supplier\": {\n      \"id\": \"clr_sup_techsup01\",\n      \"name\": \"TechSupply Co.\",\n      \"email\": \"wholesale@techsupply.com\"\n    },\n    \"items\": [\n      {\n        \"productId\": \"clr_prod_001abc\",\n        \"productName\": \"Mechanical Keyboard RGB\",\n        \"quantity\": 50,\n        \"unitCost\": 45,\n        \"lineTotal\": 2250\n      },\n      {\n        \"productId\": \"clr_prod_001abc\",\n        \"productName\": \"Mechanical Keyboard RGB\",\n        \"quantity\": 50,\n        \"unitCost\": 45,\n        \"lineTotal\": 2250\n      }\n    ],\n    \"expectedDelivery\": \"2026-08-22\",\n    \"createdAt\": \"2026-08-10T09:00:00.000Z\"\n  },\n  {\n    \"id\": \"clr_po_018mno\",\n    \"poNumber\": \"PO-2026-018\",\n    \"status\": \"ORDERED\",\n    \"total\": 2250,\n    \"supplierId\": \"clr_sup_techsup01\",\n    \"supplier\": {\n      \"id\": \"clr_sup_techsup01\",\n      \"name\": \"TechSupply Co.\",\n      \"email\": \"wholesale@techsupply.com\"\n    },\n    \"items\": [\n      {\n        \"productId\": \"clr_prod_001abc\",\n        \"productName\": \"Mechanical Keyboard RGB\",\n        \"quantity\": 50,\n        \"unitCost\": 45,\n        \"lineTotal\": 2250\n      },\n      {\n        \"productId\": \"clr_prod_001abc\",\n        \"productName\": \"Mechanical Keyboard RGB\",\n        \"quantity\": 50,\n        \"unitCost\": 45,\n        \"lineTotal\": 2250\n      }\n    ],\n    \"expectedDelivery\": \"2026-08-22\",\n    \"createdAt\": \"2026-08-10T09:00:00.000Z\"\n  }\n]",
               "cookie": [],
-              "_postman_previewlanguage": "text"
+              "_postman_previewlanguage": "json"
             }
           ],
           "event": [],
@@ -588,11 +1203,14 @@
           }
         },
         {
-          "id": "8724b963-a34f-47a2-b73d-d82bab541b73",
-          "name": "Create a new purchase order",
+          "id": "6e9fed6c-0295-48b6-bafd-1d4ddade2c3a",
+          "name": "Create New Purchase Order",
           "request": {
-            "name": "Create a new purchase order",
-            "description": {},
+            "name": "Create New Purchase Order",
+            "description": {
+              "content": "Create a purchase order to a supplier. When marked as RECEIVED, inventory quantities are automatically replenished.",
+              "type": "text/plain"
+            },
             "url": {
               "path": [
                 "purchases"
@@ -607,13 +1225,17 @@
               {
                 "key": "Content-Type",
                 "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
               }
             ],
             "method": "POST",
             "auth": null,
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"id\": \"<string>\",\n  \"poNumber\": \"<string>\",\n  \"status\": \"<string>\",\n  \"total\": \"<number>\"\n}",
+              "raw": "{\n  \"supplierId\": \"<string>\",\n  \"items\": [\n    {\n      \"productId\": \"<string>\",\n      \"quantity\": \"<integer>\",\n      \"unitCost\": \"<float>\"\n    },\n    {\n      \"productId\": \"<string>\",\n      \"quantity\": \"<integer>\",\n      \"unitCost\": \"<float>\"\n    }\n  ],\n  \"expectedDelivery\": \"<date>\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -623,8 +1245,59 @@
           },
           "response": [
             {
-              "id": "7e31a64e-48d6-47c9-a15a-06bc1a1209fd",
-              "name": "PO created",
+              "id": "0e2efed4-cb84-466b-94ab-95067b166b42",
+              "name": "Purchase order created",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "purchases"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"supplierId\": \"clr_sup_techsup01\",\n  \"items\": [\n    {\n      \"productId\": \"clr_prod_001abc\",\n      \"quantity\": 50,\n      \"unitCost\": 45\n    },\n    {\n      \"productId\": \"clr_prod_001abc\",\n      \"quantity\": 50,\n      \"unitCost\": 45\n    }\n  ],\n  \"expectedDelivery\": \"2026-08-22\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"id\": \"clr_po_018mno\",\n  \"poNumber\": \"PO-2026-018\",\n  \"status\": \"ORDERED\",\n  \"total\": 2250,\n  \"supplierId\": \"clr_sup_techsup01\",\n  \"supplier\": {\n    \"id\": \"clr_sup_techsup01\",\n    \"name\": \"TechSupply Co.\",\n    \"email\": \"wholesale@techsupply.com\"\n  },\n  \"items\": [\n    {\n      \"productId\": \"clr_prod_001abc\",\n      \"productName\": \"Mechanical Keyboard RGB\",\n      \"quantity\": 50,\n      \"unitCost\": 45,\n      \"lineTotal\": 2250\n    },\n    {\n      \"productId\": \"clr_prod_001abc\",\n      \"productName\": \"Mechanical Keyboard RGB\",\n      \"quantity\": 50,\n      \"unitCost\": 45,\n      \"lineTotal\": 2250\n    }\n  ],\n  \"expectedDelivery\": \"2026-08-22\",\n  \"createdAt\": \"2026-08-10T09:00:00.000Z\"\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "eefdafa0-6e86-4d0b-b717-42833d40f43b",
+              "name": "Validation error — invalid supplier or product IDs",
               "originalRequest": {
                 "url": {
                   "path": [
@@ -649,7 +1322,7 @@
                 "method": "POST",
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"id\": \"<string>\",\n  \"poNumber\": \"<string>\",\n  \"status\": \"<string>\",\n  \"total\": \"<number>\"\n}",
+                  "raw": "{\n  \"supplierId\": \"clr_sup_techsup01\",\n  \"items\": [\n    {\n      \"productId\": \"clr_prod_001abc\",\n      \"quantity\": 50,\n      \"unitCost\": 45\n    },\n    {\n      \"productId\": \"clr_prod_001abc\",\n      \"quantity\": 50,\n      \"unitCost\": 45\n    }\n  ],\n  \"expectedDelivery\": \"2026-08-22\"\n}",
                   "options": {
                     "raw": {
                       "language": "json"
@@ -657,8 +1330,8 @@
                   }
                 }
               },
-              "status": "Created",
-              "code": 201,
+              "status": "Bad Request",
+              "code": 400,
               "header": [
                 {
                   "key": "Content-Type",
@@ -679,7 +1352,7 @@
       "event": []
     },
     {
-      "id": "61edd417-31b5-4e4d-9312-aa5e1ab6f4d7",
+      "id": "45ae1eb7-a00e-4025-b68a-e30dbdcfb2ea",
       "name": "HR",
       "description": {
         "content": "",
@@ -687,11 +1360,14 @@
       },
       "item": [
         {
-          "id": "1bb9d4c5-0b89-4f2a-a553-0430d269ec81",
-          "name": "List all employees",
+          "id": "8f1d1287-e7fd-486d-a2f3-f1db293e3873",
+          "name": "List All Employees",
           "request": {
-            "name": "List all employees",
-            "description": {},
+            "name": "List All Employees",
+            "description": {
+              "content": "Retrieve the full employee directory with position, department, salary, and status. Salary data is masked for non-Admin roles.",
+              "type": "text/plain"
+            },
             "url": {
               "path": [
                 "hr",
@@ -703,13 +1379,164 @@
               "query": [],
               "variable": []
             },
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
             "method": "GET",
             "auth": null
           },
           "response": [
             {
-              "id": "c0824409-981e-4cea-8ada-4136fbf070de",
+              "id": "cb39e004-8aaa-452a-bfb4-7eae2f42e156",
               "name": "Array of employees",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "hr",
+                    "employees"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "GET",
+                "body": {}
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "[\n  {\n    \"id\": \"clr_emp_sarah01\",\n    \"name\": \"Sarah Ahmed\",\n    \"email\": \"sarah.ahmed@bizloom.com\",\n    \"position\": \"Senior Developer\",\n    \"department\": \"Engineering\",\n    \"salary\": 85000,\n    \"status\": \"ACTIVE\",\n    \"hireDate\": \"2025-03-01\",\n    \"phone\": \"+92-321-1234567\"\n  },\n  {\n    \"id\": \"clr_emp_sarah01\",\n    \"name\": \"Sarah Ahmed\",\n    \"email\": \"sarah.ahmed@bizloom.com\",\n    \"position\": \"Senior Developer\",\n    \"department\": \"Engineering\",\n    \"salary\": 85000,\n    \"status\": \"ACTIVE\",\n    \"hireDate\": \"2025-03-01\",\n    \"phone\": \"+92-321-1234567\"\n  }\n]",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            }
+          ],
+          "event": [],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          }
+        },
+        {
+          "id": "0162096b-6c1f-46b8-8fd3-9b219dc4bc0c",
+          "name": "Register New Employee",
+          "request": {
+            "name": "Register New Employee",
+            "description": {
+              "content": "Add a new employee to the HR directory. Admin and Manager roles only.",
+              "type": "text/plain"
+            },
+            "url": {
+              "path": [
+                "hr",
+                "employees"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "auth": null,
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"<string>\",\n  \"email\": \"<email>\",\n  \"position\": \"<string>\",\n  \"department\": \"<string>\",\n  \"salary\": \"<float>\",\n  \"phone\": \"<string>\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "id": "0a71823f-20ab-4bbd-8b24-cdd3030c9c84",
+              "name": "Employee registered successfully",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "hr",
+                    "employees"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"Ali Hassan\",\n  \"email\": \"ali.hassan@bizloom.com\",\n  \"position\": \"UI/UX Designer\",\n  \"department\": \"Design\",\n  \"salary\": 65000,\n  \"phone\": \"+92-300-9876543\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"id\": \"clr_emp_sarah01\",\n  \"name\": \"Sarah Ahmed\",\n  \"email\": \"sarah.ahmed@bizloom.com\",\n  \"position\": \"Senior Developer\",\n  \"department\": \"Engineering\",\n  \"salary\": 85000,\n  \"status\": \"ACTIVE\",\n  \"hireDate\": \"2025-03-01\",\n  \"phone\": \"+92-321-1234567\"\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "64f69dd5-82c2-4024-951f-e5c7266bf395",
+              "name": "Validation error — duplicate email or missing fields",
               "originalRequest": {
                 "url": {
                   "path": [
@@ -732,11 +1559,19 @@
                     "value": "Bearer <token>"
                   }
                 ],
-                "method": "GET",
-                "body": {}
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"Ali Hassan\",\n  \"email\": \"ali.hassan@bizloom.com\",\n  \"position\": \"UI/UX Designer\",\n  \"department\": \"Design\",\n  \"salary\": 65000,\n  \"phone\": \"+92-300-9876543\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
               },
-              "status": "OK",
-              "code": 200,
+              "status": "Bad Request",
+              "code": 400,
               "header": [
                 {
                   "key": "Content-Type",
@@ -757,7 +1592,7 @@
       "event": []
     },
     {
-      "id": "e6edf39d-c7cf-4aeb-adc3-b60874c4c7eb",
+      "id": "ff54fc27-b57c-448f-bb79-e9371c35b99e",
       "name": "Finance",
       "description": {
         "content": "",
@@ -765,11 +1600,126 @@
       },
       "item": [
         {
-          "id": "953cbdad-45a8-4385-bf8f-8405db2dbbac",
-          "name": "List all transactions",
+          "id": "7a113456-787e-4439-ae04-75974f7f02d2",
+          "name": "List All Transactions",
           "request": {
-            "name": "List all transactions",
-            "description": {},
+            "name": "List All Transactions",
+            "description": {
+              "content": "Retrieve all financial transactions (income and expenses). Supports filtering by type (INCOME/EXPENSE) and date range.",
+              "type": "text/plain"
+            },
+            "url": {
+              "path": [
+                "finance",
+                "transactions"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [
+                {
+                  "disabled": false,
+                  "key": "type",
+                  "value": "<string>",
+                  "description": "Filter by transaction type"
+                },
+                {
+                  "disabled": false,
+                  "key": "startDate",
+                  "value": "<date>",
+                  "description": "Start date for range filter"
+                },
+                {
+                  "disabled": false,
+                  "key": "endDate",
+                  "value": "<date>",
+                  "description": "End date for range filter"
+                }
+              ],
+              "variable": []
+            },
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "method": "GET",
+            "auth": null
+          },
+          "response": [
+            {
+              "id": "a8b986ae-1a00-4816-bbec-7da3e447325f",
+              "name": "Array of financial transactions",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "finance",
+                    "transactions"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [
+                    {
+                      "key": "type",
+                      "value": "EXPENSE"
+                    },
+                    {
+                      "key": "startDate",
+                      "value": "2026-08-01"
+                    },
+                    {
+                      "key": "endDate",
+                      "value": "2026-08-31"
+                    }
+                  ],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "GET",
+                "body": {}
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "[\n  {\n    \"id\": \"clr_txn_aug001\",\n    \"amount\": 1240,\n    \"type\": \"INCOME\",\n    \"category\": \"Product Sales\",\n    \"description\": \"Payment received for ORD-2026-041 from Acme Corp\",\n    \"date\": \"2026-08-14T15:30:00.000Z\",\n    \"reference\": \"ORD-2026-041\"\n  },\n  {\n    \"id\": \"clr_txn_aug001\",\n    \"amount\": 1240,\n    \"type\": \"INCOME\",\n    \"category\": \"Product Sales\",\n    \"description\": \"Payment received for ORD-2026-041 from Acme Corp\",\n    \"date\": \"2026-08-14T15:30:00.000Z\",\n    \"reference\": \"ORD-2026-041\"\n  }\n]",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            }
+          ],
+          "event": [],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          }
+        },
+        {
+          "id": "d1945f5e-82fa-427e-a9f9-37ad91c391ec",
+          "name": "Record New Transaction",
+          "request": {
+            "name": "Record New Transaction",
+            "description": {
+              "content": "Record a new income or expense transaction in the finance ledger.",
+              "type": "text/plain"
+            },
             "url": {
               "path": [
                 "finance",
@@ -781,13 +1731,32 @@
               "query": [],
               "variable": []
             },
-            "method": "GET",
-            "auth": null
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "auth": null,
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": \"<float>\",\n  \"type\": \"<string>\",\n  \"category\": \"<string>\",\n  \"description\": \"<string>\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
           },
           "response": [
             {
-              "id": "4738e2a3-5284-4f17-a962-0d35742a2369",
-              "name": "Array of transactions",
+              "id": "cd5c9353-7723-4a42-8955-e348d89ecfa7",
+              "name": "Transaction recorded",
               "originalRequest": {
                 "url": {
                   "path": [
@@ -808,6 +1777,118 @@
                     },
                     "key": "Authorization",
                     "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"amount\": 450,\n  \"type\": \"EXPENSE\",\n  \"category\": \"Office Supplies\",\n  \"description\": \"Monthly stationery purchase from PrintWorld\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"id\": \"clr_txn_aug001\",\n  \"amount\": 1240,\n  \"type\": \"INCOME\",\n  \"category\": \"Product Sales\",\n  \"description\": \"Payment received for ORD-2026-041 from Acme Corp\",\n  \"date\": \"2026-08-14T15:30:00.000Z\",\n  \"reference\": \"ORD-2026-041\"\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            }
+          ],
+          "event": [],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          }
+        },
+        {
+          "id": "bf36ec58-7503-45ba-b932-18664620a222",
+          "name": "Get Profit & Loss Report",
+          "request": {
+            "name": "Get Profit & Loss Report",
+            "description": {
+              "content": "Calculate total income, total expenses, and net profit for a specified date range.",
+              "type": "text/plain"
+            },
+            "url": {
+              "path": [
+                "finance",
+                "profit-loss"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [
+                {
+                  "disabled": false,
+                  "key": "startDate",
+                  "value": "<date>"
+                },
+                {
+                  "disabled": false,
+                  "key": "endDate",
+                  "value": "<date>"
+                }
+              ],
+              "variable": []
+            },
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "method": "GET",
+            "auth": null
+          },
+          "response": [
+            {
+              "id": "2b42470a-3ff3-44ce-a550-511d9d198e1c",
+              "name": "Profit & Loss summary",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "finance",
+                    "profit-loss"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [
+                    {
+                      "key": "startDate",
+                      "value": "2026-07-01"
+                    },
+                    {
+                      "key": "endDate",
+                      "value": "2026-07-31"
+                    }
+                  ],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
                   }
                 ],
                 "method": "GET",
@@ -818,12 +1899,12 @@
               "header": [
                 {
                   "key": "Content-Type",
-                  "value": "text/plain"
+                  "value": "application/json"
                 }
               ],
-              "body": "",
+              "body": "{\n  \"totalIncome\": 42000,\n  \"totalExpenses\": 28500,\n  \"netProfit\": 13500,\n  \"startDate\": \"2026-07-01\",\n  \"endDate\": \"2026-07-31\"\n}",
               "cookie": [],
-              "_postman_previewlanguage": "text"
+              "_postman_previewlanguage": "json"
             }
           ],
           "event": [],
@@ -835,7 +1916,7 @@
       "event": []
     },
     {
-      "id": "68ce430f-6647-4824-8137-f90f9141c1d8",
+      "id": "b8a8a2d3-fce6-40f4-aa48-26be86aee97c",
       "name": "Dashboard",
       "description": {
         "content": "",
@@ -843,11 +1924,14 @@
       },
       "item": [
         {
-          "id": "b6b7c954-15f6-45c7-af4d-09df6ea5531a",
-          "name": "Get Business Health Score",
+          "id": "a4714c0c-0794-4d38-bf55-3437b0c3c45a",
+          "name": "Get AI Business Health Score",
           "request": {
-            "name": "Get Business Health Score",
-            "description": {},
+            "name": "Get AI Business Health Score",
+            "description": {
+              "content": "Returns a composite 0–100 health score computed from 4 weighted components: Inventory Turnover (20%), Sales Growth (30%), Cash Flow Ratio (30%), and Collection Efficiency (20%). Includes an AI-generated natural-language summary.",
+              "type": "text/plain"
+            },
             "url": {
               "path": [
                 "dashboard",
@@ -859,13 +1943,19 @@
               "query": [],
               "variable": []
             },
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
             "method": "GET",
             "auth": null
           },
           "response": [
             {
-              "id": "5e246dac-8783-464c-8007-ab2f53fed579",
-              "name": "Score and AI summary",
+              "id": "1c6391a1-56f5-4cbe-897f-28c637c47302",
+              "name": "Business health score with component breakdown and AI summary",
               "originalRequest": {
                 "url": {
                   "path": [
@@ -886,6 +1976,10 @@
                     },
                     "key": "Authorization",
                     "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
                   }
                 ],
                 "method": "GET",
@@ -896,12 +1990,270 @@
               "header": [
                 {
                   "key": "Content-Type",
-                  "value": "text/plain"
+                  "value": "application/json"
                 }
               ],
-              "body": "",
+              "body": "{\n  \"score\": 78,\n  \"grade\": \"Good\",\n  \"components\": {\n    \"inventoryTurnover\": {\n      \"score\": 72,\n      \"weight\": 0.2\n    },\n    \"salesGrowth\": {\n      \"score\": 85,\n      \"weight\": 0.3\n    },\n    \"cashFlow\": {\n      \"score\": 68,\n      \"weight\": 0.3\n    },\n    \"collectionEfficiency\": {\n      \"score\": 91,\n      \"weight\": 0.2\n    }\n  },\n  \"aiSummary\": \"Your business is performing well with strong sales growth of 14% month-over-month. Inventory turnover could be improved — consider reducing slow-moving SKUs. Cash flow is healthy with a 2.1x coverage ratio.\",\n  \"generatedAt\": \"2026-08-15T09:35:00.000Z\"\n}",
               "cookie": [],
-              "_postman_previewlanguage": "text"
+              "_postman_previewlanguage": "json"
+            }
+          ],
+          "event": [],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          }
+        },
+        {
+          "id": "78691a0d-2b5c-4c15-882f-9cb8c843ab0b",
+          "name": "Get Dashboard Widget Data",
+          "request": {
+            "name": "Get Dashboard Widget Data",
+            "description": {
+              "content": "Returns aggregated data for all dashboard widgets: stat cards, sales trends, top products, upcoming payments, attendance snapshot, calendar events, and more.",
+              "type": "text/plain"
+            },
+            "url": {
+              "path": [
+                "dashboard",
+                "widgets"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "method": "GET",
+            "auth": null
+          },
+          "response": [
+            {
+              "id": "f2ec5377-d361-4b51-bda6-cc57ae767e5c",
+              "name": "Aggregated widget data for the dashboard",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "dashboard",
+                    "widgets"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "GET",
+                "body": {}
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"stats\": {\n    \"totalRevenue\": 24580,\n    \"totalOrders\": 156,\n    \"inventoryValue\": 89200,\n    \"activeEmployees\": 28\n  },\n  \"salesTrend\": [\n    {\n      \"month\": \"Aug 2026\",\n      \"revenue\": 24580\n    },\n    {\n      \"month\": \"Aug 2026\",\n      \"revenue\": 24580\n    }\n  ]\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            }
+          ],
+          "event": [],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          }
+        }
+      ],
+      "event": []
+    },
+    {
+      "id": "52635490-09f7-43c1-b8f1-59a9d5e349d8",
+      "name": "Customers",
+      "description": {
+        "content": "",
+        "type": "text/plain"
+      },
+      "item": [
+        {
+          "id": "ba97f42c-6038-4e74-8671-3ccc2df44883",
+          "name": "List All Customers",
+          "request": {
+            "name": "List All Customers",
+            "description": {
+              "content": "Retrieve the customer directory with contact info and purchase history summaries.",
+              "type": "text/plain"
+            },
+            "url": {
+              "path": [
+                "customers"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "method": "GET",
+            "auth": null
+          },
+          "response": [
+            {
+              "id": "53223ab8-30a7-467e-ba30-d43dec0edcc9",
+              "name": "Array of customers",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "customers"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "GET",
+                "body": {}
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "[\n  {\n    \"id\": \"clr_cust_acme01\",\n    \"name\": \"Acme Corp\",\n    \"email\": \"orders@acmecorp.com\",\n    \"phone\": \"+1-555-0142\",\n    \"company\": \"Acme Corporation\",\n    \"totalOrders\": 23,\n    \"totalSpent\": 18450\n  },\n  {\n    \"id\": \"clr_cust_acme01\",\n    \"name\": \"Acme Corp\",\n    \"email\": \"orders@acmecorp.com\",\n    \"phone\": \"+1-555-0142\",\n    \"company\": \"Acme Corporation\",\n    \"totalOrders\": 23,\n    \"totalSpent\": 18450\n  }\n]",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            }
+          ],
+          "event": [],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          }
+        }
+      ],
+      "event": []
+    },
+    {
+      "id": "4c110d70-16ec-434e-9b71-89afc013cc43",
+      "name": "Suppliers",
+      "description": {
+        "content": "",
+        "type": "text/plain"
+      },
+      "item": [
+        {
+          "id": "682aa602-7af6-4d48-b7c3-fbb3d9f0c855",
+          "name": "List All Suppliers",
+          "request": {
+            "name": "List All Suppliers",
+            "description": {
+              "content": "Retrieve the supplier directory with contact info and total purchase history.",
+              "type": "text/plain"
+            },
+            "url": {
+              "path": [
+                "suppliers"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "method": "GET",
+            "auth": null
+          },
+          "response": [
+            {
+              "id": "ed479373-7f6e-4d64-b167-bd0b0d88dca0",
+              "name": "Array of suppliers",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "suppliers"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "GET",
+                "body": {}
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "[\n  {\n    \"id\": \"clr_sup_techsup01\",\n    \"name\": \"TechSupply Co.\",\n    \"email\": \"wholesale@techsupply.com\",\n    \"phone\": \"+1-555-0198\",\n    \"company\": \"TechSupply International\",\n    \"totalPurchases\": 34200\n  },\n  {\n    \"id\": \"clr_sup_techsup01\",\n    \"name\": \"TechSupply Co.\",\n    \"email\": \"wholesale@techsupply.com\",\n    \"phone\": \"+1-555-0198\",\n    \"company\": \"TechSupply International\",\n    \"totalPurchases\": 34200\n  }\n]",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
             }
           ],
           "event": [],
@@ -931,11 +2283,11 @@
     ]
   },
   "info": {
-    "_postman_id": "38ff3424-d52c-494d-9b5e-5ef46dc2d6af",
+    "_postman_id": "03aebe93-a307-4754-99a7-8dcbeb4ec615",
     "name": "Bizloom ERP API",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
     "description": {
-      "content": "API documentation for Bizloom ERP Backend",
+      "content": "Complete REST API documentation for Bizloom ERP — an AI-powered enterprise resource planning platform covering Authentication, Inventory, Sales, Purchases, HR, Finance, and Dashboard modules.\n\nContact Support:\n Name: Bizloom Support\n Email: support@bizloom.com",
       "type": "text/plain"
     }
   }

@@ -51,11 +51,10 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
-    // Handle 403 Forbidden
+    // Handle 403 Forbidden — let individual page components handle it gracefully.
+    // Do NOT force a global redirect here; pages can show appropriate UI or
+    // silently skip restricted data sections based on the user's role.
     if (error.response?.status === 403) {
-      if (typeof window !== 'undefined' && !originalRequest.url?.includes('/auth/refresh')) {
-        window.location.href = '/access-denied';
-      }
       return Promise.reject(error);
     }
 

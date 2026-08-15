@@ -18,7 +18,7 @@ router.use(auditLogger('SALES'));
 
 // Customer routes
 router.get('/customers', requireRoles(['ADMIN', 'MANAGER', 'EMPLOYEE', 'ACCOUNTANT']), getCustomers);
-router.post('/customers', requireRoles(['ADMIN', 'MANAGER', 'EMPLOYEE']), createCustomer);
+router.post('/customers', requireRoles(['ADMIN', 'MANAGER']), createCustomer);
 router.put('/customers/:id', requireRoles(['ADMIN', 'MANAGER']), updateCustomer);
 router.delete('/customers/:id', requireRoles(['ADMIN', 'MANAGER']), deleteCustomer);
 

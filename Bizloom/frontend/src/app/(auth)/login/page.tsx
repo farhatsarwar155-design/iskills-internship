@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import React, { useState, useEffect, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import { toast } from 'react-hot-toast';
@@ -10,9 +10,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ShieldCheck, Mail, Lock, Loader2, ArrowRight } from 'lucide-react';
 
-export default function LoginPage() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+function LoginFormContent() {
+  const searchParams = useSearchParams();
+  const isDemo = searchParams.get('demo');
+
+  const [email, setEmail] = useState(isDemo ? 'admin@bizloom.com' : '');
+  const [password, setPassword] = useState(isDemo ? 'Admin123!' : '');
   const [submitting, setSubmitting] = useState(false);
   const { login, isAuthenticated, isLoading } = useAuth();
   const router = useRouter();
@@ -36,9 +39,9 @@ export default function LoginPage() {
       toast.success('Successfully logged in!');
     } catch (error: any) {
       if (error.isUnverified) {
-        toast.error('Account unverified. Redirecting to OTP verification...');
+        toast.error('Please verify your email before logging in');
         setTimeout(() => {
-          router.push('/register');
+          router.push(`/verify-email?email=${encodeURIComponent(error.email || email)}&mockOtp=${encodeURIComponent(error.mockOtp || '')}`);
         }, 1000);
       } else {
         toast.error(error.message || 'Invalid email or password');
@@ -49,18 +52,15 @@ export default function LoginPage() {
   };
 
   if (isLoading || isAuthenticated) {
-    return null; // Let root redirect handle it
+    return null;
   }
 
   return (
     <div className="flex min-h-screen w-full flex-col lg:flex-row bg-slate-50 dark:bg-neutral-950 font-sans">
       {/* Left side: Premium brand gradient illustration */}
       <div className="relative hidden w-1/2 items-center justify-center bg-neutral-900 lg:flex overflow-hidden">
-        {/* Glow gradients */}
         <div className="absolute top-[-20%] left-[-10%] h-[600px] w-[600px] rounded-full bg-indigo-600/35 blur-[120px] dark:bg-indigo-500/20" />
         <div className="absolute bottom-[-10%] right-[-10%] h-[500px] w-[500px] rounded-full bg-teal-500/20 blur-[100px]" />
-        
-        {/* Abstract grids */}
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)] opacity-30" />
 
         <div className="relative z-10 max-w-lg px-8 text-white">
@@ -80,7 +80,6 @@ export default function LoginPage() {
             Manage inventory, sales trends, staff permissions, and finance records on a clean, premium, and unified dashboard designed for modern business operations.
           </p>
 
-          {/* Feature list badges */}
           <div className="flex flex-wrap gap-3">
             <span className="inline-flex items-center rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-neutral-200 backdrop-blur-md">
               ✦ Role-based Middleware
@@ -94,7 +93,6 @@ export default function LoginPage() {
           </div>
         </div>
         
-        {/* Footer info */}
         <div className="absolute bottom-6 left-8 text-xs text-neutral-500">
           © 2026 Bizloom, Inc. All rights reserved.
         </div>
@@ -112,7 +110,7 @@ export default function LoginPage() {
 
           <div>
             <h2 className="text-3xl font-bold tracking-tight text-neutral-900 dark:text-white">
-              Welcome back
+              {isDemo ? 'Demo Mode Sign In' : 'Welcome back'}
             </h2>
             <p className="mt-2 text-sm text-neutral-600 dark:text-neutral-400">
               New to Bizloom?{' '}
@@ -195,7 +193,7 @@ export default function LoginPage() {
                   <Button
                     type="submit"
                     disabled={submitting}
-                    className="w-full h-11 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/20 dark:bg-indigo-500 dark:hover:bg-indigo-400 dark:shadow-none hover:scale-[1.01] active:scale-[0.99] transition-all duration-150"
+                    className="w-full h-11 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/20 dark:bg-indigo-500 dark:hover:bg-indigo-400 dark:shadow-none hover:scale-[1.01] active:scale-[0.99] transition-all duration-150 cursor-pointer"
                   >
                     {submitting ? (
                       <>
@@ -227,5 +225,13 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="p-8 text-center text-xs text-neutral-400">Loading sign in...</div>}>
+      <LoginFormContent />
+    </Suspense>
   );
 }

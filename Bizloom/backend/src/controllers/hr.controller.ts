@@ -26,7 +26,15 @@ export const getEmployees = async (req: AuthenticatedRequest, res: Response) => 
       orderBy: { name: 'asc' },
     });
 
-    res.json({ employees });
+    // Mask salary for non-ADMIN roles (e.g., MANAGER)
+    const sanitizedEmployees = employees.map(emp => {
+      if (req.user?.role !== 'ADMIN') {
+        return { ...emp, salary: 0 };
+      }
+      return emp;
+    });
+
+    res.json({ employees: sanitizedEmployees });
   } catch (err) {
     res.status(500).json({ message: 'Failed to retrieve employees' });
   }
@@ -50,7 +58,10 @@ export const getEmployeeById = async (req: AuthenticatedRequest, res: Response) 
       return res.status(404).json({ message: 'Employee not found' });
     }
 
-    res.json({ employee });
+    // Mask salary for non-ADMIN roles
+    const sanitizedEmployee = req.user?.role !== 'ADMIN' ? { ...employee, salary: 0 } : employee;
+
+    res.json({ employee: sanitizedEmployee });
   } catch (err) {
     res.status(500).json({ message: 'Failed to retrieve employee details' });
   }

@@ -434,15 +434,19 @@ export default function HRDirectoryPage() {
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <label htmlFor="salary" className="text-xs font-bold text-neutral-700 dark:text-neutral-300 uppercase tracking-wider">Monthly Base ($) *</label>
+                <div className="flex justify-between items-center">
+                  <label htmlFor="salary" className="text-xs font-bold text-neutral-700 dark:text-neutral-300 uppercase tracking-wider">Monthly Base ($) *</label>
+                  {user?.role !== 'ADMIN' && <span className="text-[9px] text-rose-500 font-bold uppercase">Admin Only</span>}
+                </div>
                 <Input
                   id="salary"
                   name="salary"
                   type="number"
-                  value={formData.salary}
+                  value={user?.role !== 'ADMIN' ? '' : formData.salary}
                   onChange={handleInputChange}
                   className={`h-10 rounded-xl border-neutral-200 dark:border-neutral-800 ${formErrors.salary ? 'border-rose-500 dark:border-rose-500' : ''}`}
-                  placeholder="e.g. 5000"
+                  placeholder={user?.role !== 'ADMIN' ? "••••••••" : "e.g. 5000"}
+                  disabled={user?.role !== 'ADMIN'}
                 />
                 {formErrors.salary && <p className="text-rose-500 text-2xs font-bold">{formErrors.salary}</p>}
               </div>

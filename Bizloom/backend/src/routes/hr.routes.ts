@@ -20,14 +20,14 @@ router.use(authenticateJWT);
 router.use(auditLogger('HR'));
 
 // Employee CRUD routes
-router.get('/employees', requireRoles(['ADMIN', 'MANAGER', 'ACCOUNTANT']), getEmployees);
-router.get('/employees/:id', requireRoles(['ADMIN', 'MANAGER', 'ACCOUNTANT']), getEmployeeById);
+router.get('/employees', requireRoles(['ADMIN', 'MANAGER']), getEmployees);
+router.get('/employees/:id', requireRoles(['ADMIN', 'MANAGER']), getEmployeeById);
 router.post('/employees', requireRoles(['ADMIN', 'MANAGER']), createEmployee);
 router.put('/employees/:id', requireRoles(['ADMIN', 'MANAGER']), updateEmployee);
 router.delete('/employees/:id', requireRoles(['ADMIN', 'MANAGER']), deleteEmployee);
 
 // Attendance routes
-router.get('/attendance/today', requireRoles(['ADMIN', 'MANAGER', 'ACCOUNTANT']), getTodayStatus);
+router.get('/attendance/today', requireRoles(['ADMIN', 'MANAGER', 'EMPLOYEE']), getTodayStatus);
 router.post('/attendance/checkin', checkIn);
 router.post('/attendance/checkout', checkOut);
 router.get('/attendance/history', getAttendanceHistory);

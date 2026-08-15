@@ -50,7 +50,9 @@ import {
   Plus,
   Clock,
   Coins,
-  AlertTriangle
+  AlertTriangle,
+  Pin,
+  PinOff
 } from 'lucide-react';
 import AIChatbot from '@/components/dashboard/AIChatbot';
 import api from '@/lib/api';
@@ -61,50 +63,84 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 
-interface MenuItem {
+// All 4 valid roles — used for items visible to every authenticated user
+const ALL_ROLES: User['role'][] = ['ADMIN', 'MANAGER', 'EMPLOYEE', 'ACCOUNTANT'];
+
+interface SidebarItem {
   name: string;
   href: string;
   icon: any;
+  badgeKey?: 'sales' | 'inventory' | 'purchases';
+  /**
+   * Explicit allowlist of roles that can see this item.
+   * Every item MUST have this set. Use ALL_ROLES for universal items.
+   * This ensures filtering is never accidentally skipped.
+   */
+  roles: User['role'][];
 }
 
-const roleMenuMapping: Record<User['role'], MenuItem[]> = {
-  ADMIN: [
-    { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-    { name: 'Inventory Control', href: '/dashboard/inventory', icon: Package },
-    { name: 'Sales & Invoicing', href: '/dashboard/sales', icon: ShoppingCart },
-    { name: 'Customer Database', href: '/dashboard/customers', icon: Users },
-    { name: 'Suppliers', href: '/dashboard/suppliers', icon: Contact },
-    { name: 'Purchase Orders', href: '/dashboard/purchases', icon: Truck },
-    { name: 'HR Directory', href: '/dashboard/hr', icon: Users },
-    { name: 'Attendance', href: '/dashboard/attendance', icon: UserCheck },
-    { name: 'Finance Ledger', href: '/dashboard/finance', icon: Wallet },
-    { name: 'Analytics', href: '/dashboard/analytics', icon: BarChart3 },
-    { name: 'System Logs', href: '/dashboard/logs', icon: ScrollText },
-  ],
-  MANAGER: [
-    { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-    { name: 'Inventory Status', href: '/dashboard/inventory', icon: Package },
-    { name: 'Sales Orders', href: '/dashboard/sales', icon: ShoppingCart },
-    { name: 'Client Database', href: '/dashboard/customers', icon: Users },
-    { name: 'Suppliers', href: '/dashboard/suppliers', icon: Contact },
-    { name: 'Purchase Orders', href: '/dashboard/purchases', icon: Truck },
-    { name: 'HR Directory', href: '/dashboard/hr', icon: Users },
-    { name: 'Attendance', href: '/dashboard/attendance', icon: UserCheck },
-  ],
-  EMPLOYEE: [
-    { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-    { name: 'Inventory Ledger', href: '/dashboard/inventory', icon: Package },
-    { name: 'Attendance', href: '/dashboard/attendance', icon: UserCheck },
-  ],
-  ACCOUNTANT: [
-    { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-    { name: 'Sales Invoices', href: '/dashboard/sales', icon: ShoppingCart },
-    { name: 'Customer Accounts', href: '/dashboard/customers', icon: Users },
-    { name: 'Purchase Orders', href: '/dashboard/purchases', icon: Truck },
-    { name: 'Finance Ledger', href: '/dashboard/finance', icon: Wallet },
-    { name: 'Analytics', href: '/dashboard/analytics', icon: BarChart3 },
-  ]
-};
+interface SidebarGroup {
+  sectionTitle: string;
+  items: SidebarItem[];
+}
+
+/**
+ * ROLE-BASED ACCESS MATRIX
+ * ─────────────────────────────────────────────────────────────
+ * ADMIN       → ALL items
+ * MANAGER     → Dashboard, Calendar, Tasks, Inventory, Sales,
+ *               Customers, Suppliers, Purchases, HR, Attendance,
+ *               Settings, Help
+ * EMPLOYEE    → Dashboard, Calendar, Tasks, Inventory (view),
+ *               Sales (create), Attendance (self), Settings, Help
+ * ACCOUNTANT  → Dashboard, Calendar, Tasks, Sales, Customers,
+ *               Suppliers, Purchases, Finance, Analytics,
+ *               Settings, Help
+ * ─────────────────────────────────────────────────────────────
+ */
+const SIDEBAR_GROUPS: SidebarGroup[] = [
+  {
+    sectionTitle: 'MAIN',
+    items: [
+      { name: 'Dashboard',    href: '/dashboard',          icon: LayoutDashboard, roles: ALL_ROLES },
+      { name: 'Calendar',     href: '/dashboard/calendar', icon: CalendarDays,    roles: ALL_ROLES },
+      { name: 'Tasks / To-Do',href: '/dashboard/tasks',    icon: CheckSquare,     roles: ALL_ROLES },
+    ]
+  },
+  {
+    sectionTitle: 'OPERATIONS',
+    items: [
+      { name: 'Inventory Control',  href: '/dashboard/inventory', icon: Package,      badgeKey: 'inventory', roles: ['ADMIN', 'MANAGER', 'EMPLOYEE'] },
+      { name: 'Sales & Invoicing',  href: '/dashboard/sales',     icon: ShoppingCart, badgeKey: 'sales',     roles: ['ADMIN', 'MANAGER', 'EMPLOYEE', 'ACCOUNTANT'] },
+      { name: 'Customer Database',  href: '/dashboard/customers', icon: Users,                               roles: ['ADMIN', 'MANAGER', 'ACCOUNTANT'] },
+      { name: 'Suppliers',          href: '/dashboard/suppliers', icon: Contact,                             roles: ['ADMIN', 'MANAGER', 'ACCOUNTANT'] },
+      { name: 'Purchase Orders',    href: '/dashboard/purchases', icon: Truck,        badgeKey: 'purchases', roles: ['ADMIN', 'MANAGER', 'ACCOUNTANT'] },
+    ]
+  },
+  {
+    sectionTitle: 'HR',
+    items: [
+      { name: 'HR Directory', href: '/dashboard/hr',         icon: Users,      roles: ['ADMIN', 'MANAGER'] },
+      { name: 'Attendance',   href: '/dashboard/attendance', icon: UserCheck,  roles: ['ADMIN', 'MANAGER', 'EMPLOYEE'] },
+    ]
+  },
+  {
+    sectionTitle: 'FINANCE',
+    items: [
+      { name: 'Finance Ledger', href: '/dashboard/finance',   icon: Wallet,   roles: ['ADMIN', 'ACCOUNTANT'] },
+      { name: 'Analytics',      href: '/dashboard/analytics', icon: BarChart3, roles: ['ADMIN', 'ACCOUNTANT'] },
+    ]
+  },
+  {
+    sectionTitle: 'SYSTEM',
+    items: [
+      { name: 'System Logs',     href: '/dashboard/logs',      icon: ScrollText, roles: ['ADMIN'] },
+      { name: 'User Management', href: '/dashboard/users',     icon: ShieldCheck, roles: ['ADMIN'] },
+      { name: 'Settings',        href: '/dashboard/settings',  icon: Settings,    roles: ALL_ROLES },
+      { name: 'Help & Support',  href: '/dashboard/help',      icon: HelpCircle,  roles: ALL_ROLES },
+    ]
+  }
+];
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const { user, logout } = useAuth();
@@ -387,6 +423,145 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     { id: '4', type: 'system_update', title: 'System Migration Sync', message: 'Prisma schema and SQLite dev.db sync success.', time: '2d ago', unread: false, url: '/dashboard/logs' },
   ]);
 
+  // Pinned items & live badges state
+  const [pinnedHrefs, setPinnedHrefs] = useState<string[]>([]);
+  const [badgeCounts, setBadgeCounts] = useState<{ sales: number; inventory: number; purchases: number }>({
+    sales: 0,
+    inventory: 0,
+    purchases: 0,
+  });
+
+  useEffect(() => {
+    try {
+      const storedPins = localStorage.getItem('bizloom_pinned_hrefs');
+      if (storedPins) setPinnedHrefs(JSON.parse(storedPins));
+    } catch (e) {
+      console.error(e);
+    }
+  }, []);
+
+  useEffect(() => {
+    const fetchBadges = async () => {
+      try {
+        const res = await api.get('/dashboard/widgets');
+        const d = res.data;
+        setBadgeCounts({
+          sales: d.upcomingPayments?.length || 0,
+          inventory: d.lowStockPriority?.length || 0,
+          purchases: d.greetingSummary ? 1 : 0,
+        });
+      } catch (err) {
+        // quiet error handle
+      }
+    };
+    if (user) fetchBadges();
+  }, [user, pathname]);
+
+  const togglePin = (href: string, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    let updated: string[];
+    if (pinnedHrefs.includes(href)) {
+      updated = pinnedHrefs.filter(h => h !== href);
+      toast.success('Removed from Favorites');
+    } else {
+      updated = [...pinnedHrefs, href];
+      toast.success('Pinned to Favorites!');
+    }
+    setPinnedHrefs(updated);
+    try {
+      localStorage.setItem('bizloom_pinned_hrefs', JSON.stringify(updated));
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  /**
+   * Returns true if the current user's role is in the item's explicit roles allowlist.
+   * Logs the role in development so it can be observed in DevTools > Console.
+   */
+  const isRoleAllowed = (item: SidebarItem): boolean => {
+    if (!user) return false;
+    return item.roles.includes(user.role as User['role']);
+  };
+
+  // DEV: log role on first render so it's visible in browser DevTools console
+  React.useEffect(() => {
+    if (user) {
+      console.log(`[AppShell] Sidebar rendering for role="${user.role}" email="${user.email}"`);
+      const allowed = SIDEBAR_GROUPS.flatMap(g => g.items).filter(isRoleAllowed).map(i => i.name);
+      console.log(`[AppShell] Visible items (${allowed.length}):`, allowed);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.role]);
+
+  // Find all pinned items allowed for current user
+  const allItemsFlat = SIDEBAR_GROUPS.flatMap(g => g.items);
+  const pinnedItems = allItemsFlat.filter(item => pinnedHrefs.includes(item.href) && isRoleAllowed(item));
+
+  const renderNavItem = (item: SidebarItem) => {
+    const Icon = item.icon;
+    const isActive = item.href === '/dashboard' 
+      ? pathname === item.href 
+      : pathname.startsWith(item.href);
+    const isPinned = pinnedHrefs.includes(item.href);
+    const badgeCount = item.badgeKey ? badgeCounts[item.badgeKey] : 0;
+
+    return (
+      <div key={item.href} className="relative group w-full">
+        <Link
+          href={item.href}
+          className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold transition-all duration-150 ${
+            sidebarCollapsed ? 'pr-3' : 'pr-9'
+          } ${
+            isActive
+              ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/10 dark:bg-indigo-500'
+              : 'text-neutral-600 dark:text-neutral-400 hover:bg-slate-100 dark:hover:bg-neutral-800/70 hover:text-neutral-900 dark:hover:text-white'
+          }`}
+          title={sidebarCollapsed ? item.name : undefined}
+        >
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="relative shrink-0">
+              <Icon className={`h-4.5 w-4.5 transition-transform group-hover:scale-105 duration-150 ${
+                isActive ? 'text-white' : 'text-neutral-500 dark:text-neutral-400 group-hover:text-neutral-900 dark:group-hover:text-white'
+              }`} />
+              {/* Collapsed Badge Dot */}
+              {sidebarCollapsed && badgeCount > 0 && (
+                <span className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-rose-500 ring-2 ring-white dark:ring-neutral-900" />
+              )}
+            </div>
+            {!sidebarCollapsed && <span className="truncate">{item.name}</span>}
+          </div>
+
+          {!sidebarCollapsed && badgeCount > 0 && (
+            <span className={`text-[10px] font-black px-1.5 py-0.2 rounded-full ${
+              isActive ? 'bg-white text-indigo-700' : 'bg-rose-500 text-white'
+            }`}>
+              {badgeCount}
+            </span>
+          )}
+        </Link>
+
+        {/* Pin Toggle Button (Absolute Sibling to avoid nested interactive elements and click hijacking) */}
+        {!sidebarCollapsed && (
+          <button
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              togglePin(item.href, e);
+            }}
+            className={`absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded transition-opacity hover:bg-black/10 dark:hover:bg-white/10 z-10 ${
+              isPinned ? 'opacity-100 text-amber-400 pointer-events-auto' : 'opacity-0 group-hover:opacity-100 text-neutral-400 pointer-events-none group-hover:pointer-events-auto'
+            }`}
+            title={isPinned ? 'Unpin from favorites' : 'Pin to favorites'}
+          >
+            <Pin className={`h-3 w-3 ${isPinned ? 'fill-amber-400' : ''}`} />
+          </button>
+        )}
+      </div>
+    );
+  };
+
   const handleLogout = async () => {
     try {
       await logout();
@@ -406,14 +581,11 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   };
 
   const unreadCount = notifications.filter(n => n.unread).length;
-  const menuItems = user ? roleMenuMapping[user.role] : [];
 
-  // Close mobile drawer on route change
   useEffect(() => {
     setMobileMenuOpen(false);
   }, [pathname]);
 
-  // Handle Breadcrumbs
   const getBreadcrumbs = () => {
     const segments = pathname.split('/').filter(x => x);
     return (
@@ -425,7 +597,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           const path = `/${segments.slice(0, idx + 1).join('/')}`;
           const isLast = idx === segments.length - 1;
           const displaySegment = segment.charAt(0).toUpperCase() + segment.slice(1).replace('-', ' ');
-          
+
           return (
             <React.Fragment key={path}>
               <span className="text-neutral-300 dark:text-neutral-700">/</span>
@@ -454,7 +626,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         }`}
       >
         {/* Brand Header */}
-        <div className="h-16 flex items-center justify-between px-4 border-b border-neutral-200/50 dark:border-neutral-800/50">
+        <div className="h-16 flex items-center justify-between px-4 border-b border-neutral-200/50 dark:border-neutral-800/50 shrink-0">
           <Link href="/dashboard" className="flex items-center gap-2.5 overflow-hidden">
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-indigo-600 dark:bg-indigo-500 shadow-md shadow-indigo-600/10">
               <ShieldCheck className="h-6 w-6 text-white" />
@@ -475,33 +647,42 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           </Button>
         </div>
 
-        {/* Sidebar Menu Items */}
-        <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-1.5 scrollbar-thin">
-          {menuItems.map((item) => {
-            const Icon = item.icon;
-            const isActive = pathname === item.href;
+        {/* Sidebar Grouped Menu */}
+        <nav className="flex-1 overflow-y-auto px-3 py-3 space-y-4 scrollbar-thin">
+          {/* FAVORITES / PINNED SECTION */}
+          {pinnedItems.length > 0 && (
+            <div className="space-y-1">
+              {!sidebarCollapsed && (
+                <div className="px-2 pb-1 text-[10px] font-black text-amber-500 uppercase tracking-wider flex items-center gap-1">
+                  <Pin className="h-3 w-3 fill-amber-400" /> Favorites
+                </div>
+              )}
+              {pinnedItems.map(renderNavItem)}
+              <div className="my-2 border-b border-neutral-100 dark:border-neutral-800/60" />
+            </div>
+          )}
+
+          {/* GROUPED SECTIONS */}
+          {SIDEBAR_GROUPS.map((group) => {
+            const allowedItems = group.items.filter(isRoleAllowed);
+            if (allowedItems.length === 0) return null;
+
             return (
-              <Link
-                key={item.name}
-                href={item.href}
-                className={`flex items-center gap-3.5 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all duration-150 group ${
-                  isActive
-                    ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/10 dark:bg-indigo-500'
-                    : 'text-neutral-600 dark:text-neutral-400 hover:bg-slate-100 dark:hover:bg-neutral-800/70 hover:text-neutral-900 dark:hover:text-white'
-                }`}
-              >
-                <Icon className={`h-5 w-5 shrink-0 transition-transform group-hover:scale-105 duration-150 ${
-                  isActive ? 'text-white' : 'text-neutral-500 dark:text-neutral-400 group-hover:text-neutral-900 dark:group-hover:text-white'
-                }`} />
-                {!sidebarCollapsed && <span className="truncate">{item.name}</span>}
-              </Link>
+              <div key={group.sectionTitle} className="space-y-1">
+                {!sidebarCollapsed && (
+                  <div className="px-2 pb-1 text-[10px] font-black text-neutral-400 dark:text-neutral-500 uppercase tracking-wider">
+                    {group.sectionTitle}
+                  </div>
+                )}
+                {allowedItems.map(renderNavItem)}
+              </div>
             );
           })}
         </nav>
 
         {/* User Card at bottom */}
         {user && !sidebarCollapsed && (
-          <div className="p-4 border-t border-neutral-200/50 dark:border-neutral-800/50 bg-slate-50/50 dark:bg-neutral-900/30">
+          <div className="p-3.5 border-t border-neutral-200/50 dark:border-neutral-800/50 bg-slate-50/50 dark:bg-neutral-900/30 shrink-0">
             <div className="flex items-center gap-3">
               <Avatar className="h-9 w-9 border border-neutral-200 dark:border-neutral-800">
                 <AvatarFallback className="bg-indigo-100 text-indigo-700 dark:bg-neutral-800 dark:text-indigo-400 font-bold text-sm">
@@ -523,7 +704,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       {mobileMenuOpen && (
         <div className="fixed inset-0 z-50 md:hidden bg-neutral-900/60 backdrop-blur-sm" onClick={() => setMobileMenuOpen(false)}>
           <aside 
-            className="fixed top-0 bottom-0 left-0 w-64 bg-white dark:bg-neutral-900 p-4 border-r border-neutral-200 dark:border-neutral-800 flex flex-col space-y-4 animate-in slide-in-from-left duration-200"
+            className="fixed top-0 bottom-0 left-0 w-64 bg-white dark:bg-neutral-900 p-4 border-r border-neutral-200 dark:border-neutral-800 flex flex-col space-y-4 animate-in slide-in-from-left duration-200 overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between">
@@ -543,23 +724,18 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
               </Button>
             </div>
             
-            <nav className="flex-1 space-y-1 pt-4">
-              {menuItems.map((item) => {
-                const Icon = item.icon;
-                const isActive = pathname === item.href;
+            <nav className="flex-1 space-y-4 pt-2">
+              {SIDEBAR_GROUPS.map((group) => {
+                const allowedItems = group.items.filter(isRoleAllowed);
+                if (allowedItems.length === 0) return null;
+
                 return (
-                  <Link
-                    key={item.name}
-                    href={item.href}
-                    className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all duration-150 ${
-                      isActive
-                        ? 'bg-indigo-600 text-white dark:bg-indigo-500'
-                        : 'text-neutral-600 dark:text-neutral-400 hover:bg-slate-100 dark:hover:bg-neutral-800'
-                    }`}
-                  >
-                    <Icon className="h-5 w-5 shrink-0" />
-                    <span>{item.name}</span>
-                  </Link>
+                  <div key={group.sectionTitle} className="space-y-1">
+                    <div className="px-2 pb-1 text-[10px] font-black text-neutral-400 dark:text-neutral-500 uppercase tracking-wider">
+                      {group.sectionTitle}
+                    </div>
+                    {allowedItems.map(renderNavItem)}
+                  </div>
                 );
               })}
             </nav>

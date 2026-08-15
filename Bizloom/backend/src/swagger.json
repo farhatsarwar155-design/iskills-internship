@@ -2,8 +2,12 @@
   "openapi": "3.0.0",
   "info": {
     "title": "Bizloom ERP API",
-    "description": "API documentation for Bizloom ERP Backend",
-    "version": "1.0.0"
+    "description": "Complete REST API documentation for Bizloom ERP — an AI-powered enterprise resource planning platform covering Authentication, Inventory, Sales, Purchases, HR, Finance, and Dashboard modules.",
+    "version": "2.0.0",
+    "contact": {
+      "name": "Bizloom Support",
+      "email": "support@bizloom.com"
+    }
   },
   "servers": [
     {
@@ -16,7 +20,8 @@
       "bearerAuth": {
         "type": "http",
         "scheme": "bearer",
-        "bearerFormat": "JWT"
+        "bearerFormat": "JWT",
+        "description": "Enter the JWT token obtained from /auth/login"
       }
     },
     "schemas": {
@@ -24,21 +29,22 @@
         "type": "object",
         "required": ["email", "password"],
         "properties": {
-          "email": { "type": "string", "example": "admin@bizloom.com" },
-          "password": { "type": "string", "example": "password123" }
+          "email": { "type": "string", "format": "email", "example": "admin@bizloom.com" },
+          "password": { "type": "string", "format": "password", "example": "password123" }
         }
       },
       "LoginResponse": {
         "type": "object",
         "properties": {
-          "token": { "type": "string" },
+          "token": { "type": "string", "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJjbHIxMjM0NTY3ODkiLCJyb2xlIjoiQURNSU4iLCJpYXQiOjE3MjM3NDQ0MDB9.abc123" },
           "user": {
             "type": "object",
             "properties": {
-              "id": { "type": "string" },
-              "email": { "type": "string" },
-              "role": { "type": "string" },
-              "name": { "type": "string" }
+              "id": { "type": "string", "example": "clr1234567890abcdef" },
+              "email": { "type": "string", "example": "admin@bizloom.com" },
+              "role": { "type": "string", "enum": ["ADMIN", "MANAGER", "EMPLOYEE", "ACCOUNTANT"], "example": "ADMIN" },
+              "name": { "type": "string", "example": "Farhat Sarwar" },
+              "lastLogin": { "type": "string", "format": "date-time", "example": "2026-08-15T09:30:00.000Z" }
             }
           }
         }
@@ -46,50 +52,223 @@
       "Product": {
         "type": "object",
         "properties": {
-          "id": { "type": "string" },
-          "sku": { "type": "string" },
-          "name": { "type": "string" },
-          "quantity": { "type": "number" },
-          "price": { "type": "number" },
-          "cost": { "type": "number" },
-          "minStockLevel": { "type": "number" }
+          "id": { "type": "string", "example": "clr_prod_001abc" },
+          "sku": { "type": "string", "example": "KB-RGB-MK1" },
+          "name": { "type": "string", "example": "Mechanical Keyboard RGB" },
+          "description": { "type": "string", "example": "Full-size mechanical keyboard with Cherry MX Blue switches and per-key RGB lighting" },
+          "quantity": { "type": "integer", "example": 15 },
+          "price": { "type": "number", "format": "float", "example": 99.99 },
+          "cost": { "type": "number", "format": "float", "example": 45.00 },
+          "minStockLevel": { "type": "integer", "example": 5 },
+          "category": { "type": "string", "example": "Peripherals" },
+          "createdAt": { "type": "string", "format": "date-time", "example": "2026-06-15T10:30:00.000Z" },
+          "updatedAt": { "type": "string", "format": "date-time", "example": "2026-08-12T14:22:00.000Z" }
+        }
+      },
+      "ProductCreateRequest": {
+        "type": "object",
+        "required": ["sku", "name", "quantity", "price", "cost", "minStockLevel"],
+        "properties": {
+          "sku": { "type": "string", "example": "MS-WL-PRO" },
+          "name": { "type": "string", "example": "Wireless Mouse Pro" },
+          "description": { "type": "string", "example": "Ergonomic wireless mouse with 16000 DPI sensor and USB-C charging" },
+          "quantity": { "type": "integer", "example": 50 },
+          "price": { "type": "number", "format": "float", "example": 59.99 },
+          "cost": { "type": "number", "format": "float", "example": 22.50 },
+          "minStockLevel": { "type": "integer", "example": 10 },
+          "category": { "type": "string", "example": "Peripherals" }
         }
       },
       "Order": {
         "type": "object",
         "properties": {
-          "id": { "type": "string" },
-          "orderNumber": { "type": "string" },
-          "status": { "type": "string" },
-          "total": { "type": "number" },
-          "customerId": { "type": "string" }
+          "id": { "type": "string", "example": "clr_ord_041xyz" },
+          "orderNumber": { "type": "string", "example": "ORD-2026-041" },
+          "status": { "type": "string", "enum": ["PENDING", "PAID", "CANCELLED", "REFUNDED"], "example": "PAID" },
+          "total": { "type": "number", "format": "float", "example": 1240.00 },
+          "customerId": { "type": "string", "example": "clr_cust_acme01" },
+          "customer": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string", "example": "clr_cust_acme01" },
+              "name": { "type": "string", "example": "Acme Corp" },
+              "email": { "type": "string", "example": "orders@acmecorp.com" }
+            }
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "productId": { "type": "string", "example": "clr_prod_001abc" },
+                "productName": { "type": "string", "example": "Mechanical Keyboard RGB" },
+                "quantity": { "type": "integer", "example": 10 },
+                "unitPrice": { "type": "number", "format": "float", "example": 99.99 },
+                "lineTotal": { "type": "number", "format": "float", "example": 999.90 }
+              }
+            }
+          },
+          "createdAt": { "type": "string", "format": "date-time", "example": "2026-08-14T11:45:00.000Z" }
+        }
+      },
+      "OrderCreateRequest": {
+        "type": "object",
+        "required": ["customerId", "items"],
+        "properties": {
+          "customerId": { "type": "string", "example": "clr_cust_acme01" },
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["productId", "quantity"],
+              "properties": {
+                "productId": { "type": "string", "example": "clr_prod_001abc" },
+                "quantity": { "type": "integer", "example": 10 }
+              }
+            }
+          }
         }
       },
       "PurchaseOrder": {
         "type": "object",
         "properties": {
-          "id": { "type": "string" },
-          "poNumber": { "type": "string" },
-          "status": { "type": "string" },
-          "total": { "type": "number" }
+          "id": { "type": "string", "example": "clr_po_018mno" },
+          "poNumber": { "type": "string", "example": "PO-2026-018" },
+          "status": { "type": "string", "enum": ["DRAFT", "ORDERED", "RECEIVED", "CANCELLED"], "example": "ORDERED" },
+          "total": { "type": "number", "format": "float", "example": 2250.00 },
+          "supplierId": { "type": "string", "example": "clr_sup_techsup01" },
+          "supplier": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string", "example": "clr_sup_techsup01" },
+              "name": { "type": "string", "example": "TechSupply Co." },
+              "email": { "type": "string", "example": "wholesale@techsupply.com" }
+            }
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "productId": { "type": "string", "example": "clr_prod_001abc" },
+                "productName": { "type": "string", "example": "Mechanical Keyboard RGB" },
+                "quantity": { "type": "integer", "example": 50 },
+                "unitCost": { "type": "number", "format": "float", "example": 45.00 },
+                "lineTotal": { "type": "number", "format": "float", "example": 2250.00 }
+              }
+            }
+          },
+          "expectedDelivery": { "type": "string", "format": "date", "example": "2026-08-22" },
+          "createdAt": { "type": "string", "format": "date-time", "example": "2026-08-10T09:00:00.000Z" }
+        }
+      },
+      "PurchaseOrderCreateRequest": {
+        "type": "object",
+        "required": ["supplierId", "items"],
+        "properties": {
+          "supplierId": { "type": "string", "example": "clr_sup_techsup01" },
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["productId", "quantity", "unitCost"],
+              "properties": {
+                "productId": { "type": "string", "example": "clr_prod_001abc" },
+                "quantity": { "type": "integer", "example": 50 },
+                "unitCost": { "type": "number", "format": "float", "example": 45.00 }
+              }
+            }
+          },
+          "expectedDelivery": { "type": "string", "format": "date", "example": "2026-08-22" }
         }
       },
       "Employee": {
         "type": "object",
         "properties": {
-          "id": { "type": "string" },
-          "name": { "type": "string" },
-          "position": { "type": "string" },
-          "salary": { "type": "number" }
+          "id": { "type": "string", "example": "clr_emp_sarah01" },
+          "name": { "type": "string", "example": "Sarah Ahmed" },
+          "email": { "type": "string", "format": "email", "example": "sarah.ahmed@bizloom.com" },
+          "position": { "type": "string", "example": "Senior Developer" },
+          "department": { "type": "string", "example": "Engineering" },
+          "salary": { "type": "number", "format": "float", "example": 85000.00 },
+          "status": { "type": "string", "enum": ["ACTIVE", "ON_LEAVE", "TERMINATED"], "example": "ACTIVE" },
+          "hireDate": { "type": "string", "format": "date", "example": "2025-03-01" },
+          "phone": { "type": "string", "example": "+92-321-1234567" }
+        }
+      },
+      "EmployeeCreateRequest": {
+        "type": "object",
+        "required": ["name", "email", "position", "department", "salary"],
+        "properties": {
+          "name": { "type": "string", "example": "Ali Hassan" },
+          "email": { "type": "string", "format": "email", "example": "ali.hassan@bizloom.com" },
+          "position": { "type": "string", "example": "UI/UX Designer" },
+          "department": { "type": "string", "example": "Design" },
+          "salary": { "type": "number", "format": "float", "example": 65000.00 },
+          "phone": { "type": "string", "example": "+92-300-9876543" }
         }
       },
       "Transaction": {
         "type": "object",
         "properties": {
-          "id": { "type": "string" },
-          "amount": { "type": "number" },
-          "type": { "type": "string", "enum": ["INCOME", "EXPENSE"] },
-          "category": { "type": "string" }
+          "id": { "type": "string", "example": "clr_txn_aug001" },
+          "amount": { "type": "number", "format": "float", "example": 1240.00 },
+          "type": { "type": "string", "enum": ["INCOME", "EXPENSE"], "example": "INCOME" },
+          "category": { "type": "string", "example": "Product Sales" },
+          "description": { "type": "string", "example": "Payment received for ORD-2026-041 from Acme Corp" },
+          "date": { "type": "string", "format": "date-time", "example": "2026-08-14T15:30:00.000Z" },
+          "reference": { "type": "string", "example": "ORD-2026-041" }
+        }
+      },
+      "TransactionCreateRequest": {
+        "type": "object",
+        "required": ["amount", "type", "category"],
+        "properties": {
+          "amount": { "type": "number", "format": "float", "example": 450.00 },
+          "type": { "type": "string", "enum": ["INCOME", "EXPENSE"], "example": "EXPENSE" },
+          "category": { "type": "string", "example": "Office Supplies" },
+          "description": { "type": "string", "example": "Monthly stationery purchase from PrintWorld" }
+        }
+      },
+      "HealthScore": {
+        "type": "object",
+        "properties": {
+          "score": { "type": "integer", "example": 78 },
+          "grade": { "type": "string", "example": "Good" },
+          "components": {
+            "type": "object",
+            "properties": {
+              "inventoryTurnover": { "type": "object", "properties": { "score": { "type": "number", "example": 72 }, "weight": { "type": "number", "example": 0.20 } } },
+              "salesGrowth": { "type": "object", "properties": { "score": { "type": "number", "example": 85 }, "weight": { "type": "number", "example": 0.30 } } },
+              "cashFlow": { "type": "object", "properties": { "score": { "type": "number", "example": 68 }, "weight": { "type": "number", "example": 0.30 } } },
+              "collectionEfficiency": { "type": "object", "properties": { "score": { "type": "number", "example": 91 }, "weight": { "type": "number", "example": 0.20 } } }
+            }
+          },
+          "aiSummary": { "type": "string", "example": "Your business is performing well with strong sales growth of 14% month-over-month. Inventory turnover could be improved — consider reducing slow-moving SKUs. Cash flow is healthy with a 2.1x coverage ratio." },
+          "generatedAt": { "type": "string", "format": "date-time", "example": "2026-08-15T09:35:00.000Z" }
+        }
+      },
+      "Customer": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "example": "clr_cust_acme01" },
+          "name": { "type": "string", "example": "Acme Corp" },
+          "email": { "type": "string", "format": "email", "example": "orders@acmecorp.com" },
+          "phone": { "type": "string", "example": "+1-555-0142" },
+          "company": { "type": "string", "example": "Acme Corporation" },
+          "totalOrders": { "type": "integer", "example": 23 },
+          "totalSpent": { "type": "number", "format": "float", "example": 18450.00 }
+        }
+      },
+      "Supplier": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "example": "clr_sup_techsup01" },
+          "name": { "type": "string", "example": "TechSupply Co." },
+          "email": { "type": "string", "format": "email", "example": "wholesale@techsupply.com" },
+          "phone": { "type": "string", "example": "+1-555-0198" },
+          "company": { "type": "string", "example": "TechSupply International" },
+          "totalPurchases": { "type": "number", "format": "float", "example": 34200.00 }
         }
       }
     }
@@ -102,6 +281,7 @@
       "post": {
         "tags": ["Authentication"],
         "summary": "User Login",
+        "description": "Authenticate a user with email and password. Returns a JWT token and user profile. The token must be included in the Authorization header for all subsequent requests.",
         "security": [],
         "requestBody": {
           "required": true,
@@ -111,108 +291,329 @@
         },
         "responses": {
           "200": {
-            "description": "Successful login",
+            "description": "Login successful — returns JWT token and user profile",
             "content": { "application/json": { "schema": { "$ref": "#/components/schemas/LoginResponse" } } }
-          }
+          },
+          "401": { "description": "Invalid email or password" }
         }
       }
     },
     "/auth/profile": {
       "get": {
         "tags": ["Authentication"],
-        "summary": "Get User Profile",
+        "summary": "Get Current User Profile",
+        "description": "Returns the authenticated user's profile including role, name, email, and last login timestamp.",
         "responses": {
-          "200": { "description": "Profile data" }
+          "200": {
+            "description": "Authenticated user profile",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": { "type": "string", "example": "clr1234567890abcdef" },
+                    "email": { "type": "string", "example": "admin@bizloom.com" },
+                    "name": { "type": "string", "example": "Farhat Sarwar" },
+                    "role": { "type": "string", "example": "ADMIN" },
+                    "lastLogin": { "type": "string", "example": "2026-08-15T09:30:00.000Z" }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "description": "Not authenticated — token missing or expired" }
         }
       }
     },
     "/inventory": {
       "get": {
         "tags": ["Inventory"],
-        "summary": "List all products",
+        "summary": "List All Products",
+        "description": "Retrieve the full product catalog with stock quantities, pricing, and category info. Supports search via query parameter.",
+        "parameters": [
+          { "name": "search", "in": "query", "required": false, "schema": { "type": "string", "example": "keyboard" }, "description": "Filter products by name or SKU" }
+        ],
         "responses": {
           "200": {
-            "description": "Array of products",
+            "description": "Array of inventory products",
             "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/Product" } } } }
           }
         }
       },
       "post": {
         "tags": ["Inventory"],
-        "summary": "Create a new product",
+        "summary": "Create New Product",
+        "description": "Add a new product to the inventory catalog. Requires Admin or Manager role.",
         "requestBody": {
           "required": true,
-          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Product" } } }
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ProductCreateRequest" } } }
         },
         "responses": {
-          "201": { "description": "Product created" }
+          "201": {
+            "description": "Product created successfully",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Product" } } }
+          },
+          "400": { "description": "Validation error — missing required fields or duplicate SKU" },
+          "403": { "description": "Forbidden — insufficient role permissions" }
+        }
+      }
+    },
+    "/inventory/{id}": {
+      "put": {
+        "tags": ["Inventory"],
+        "summary": "Update Product",
+        "description": "Update an existing product's details (name, price, stock level, etc.).",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string", "example": "clr_prod_001abc" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ProductCreateRequest" } } }
+        },
+        "responses": {
+          "200": { "description": "Product updated successfully", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Product" } } } },
+          "404": { "description": "Product not found" }
+        }
+      },
+      "delete": {
+        "tags": ["Inventory"],
+        "summary": "Delete Product",
+        "description": "Permanently remove a product from the inventory. Admin only.",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string", "example": "clr_prod_001abc" } }
+        ],
+        "responses": {
+          "200": { "description": "Product deleted successfully" },
+          "404": { "description": "Product not found" }
         }
       }
     },
     "/sales": {
       "get": {
         "tags": ["Sales"],
-        "summary": "List all sales orders",
+        "summary": "List All Sales Orders",
+        "description": "Retrieve all sales orders with customer details, item breakdowns, and payment status.",
         "responses": {
-          "200": { "description": "Array of orders" }
+          "200": {
+            "description": "Array of sales orders",
+            "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/Order" } } } }
+          }
         }
       },
       "post": {
         "tags": ["Sales"],
-        "summary": "Create a new sale",
+        "summary": "Create New Sales Order",
+        "description": "Create a new sales invoice. Automatically deducts inventory quantities for each line item.",
         "requestBody": {
           "required": true,
-          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Order" } } }
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/OrderCreateRequest" } } }
         },
         "responses": {
-          "201": { "description": "Order created" }
+          "201": {
+            "description": "Sales order created — inventory quantities deducted automatically",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Order" } } }
+          },
+          "400": { "description": "Validation error — insufficient stock or invalid customer" }
         }
       }
     },
     "/purchases": {
       "get": {
         "tags": ["Purchases"],
-        "summary": "List all purchase orders",
+        "summary": "List All Purchase Orders",
+        "description": "Retrieve all purchase orders with supplier details, item breakdowns, and delivery status.",
         "responses": {
-          "200": { "description": "Array of purchase orders" }
+          "200": {
+            "description": "Array of purchase orders",
+            "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/PurchaseOrder" } } } }
+          }
         }
       },
       "post": {
         "tags": ["Purchases"],
-        "summary": "Create a new purchase order",
+        "summary": "Create New Purchase Order",
+        "description": "Create a purchase order to a supplier. When marked as RECEIVED, inventory quantities are automatically replenished.",
         "requestBody": {
           "required": true,
-          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/PurchaseOrder" } } }
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/PurchaseOrderCreateRequest" } } }
         },
         "responses": {
-          "201": { "description": "PO created" }
+          "201": {
+            "description": "Purchase order created",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/PurchaseOrder" } } }
+          },
+          "400": { "description": "Validation error — invalid supplier or product IDs" }
         }
       }
     },
     "/hr/employees": {
       "get": {
         "tags": ["HR"],
-        "summary": "List all employees",
+        "summary": "List All Employees",
+        "description": "Retrieve the full employee directory with position, department, salary, and status. Salary data is masked for non-Admin roles.",
         "responses": {
-          "200": { "description": "Array of employees" }
+          "200": {
+            "description": "Array of employees",
+            "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/Employee" } } } }
+          }
+        }
+      },
+      "post": {
+        "tags": ["HR"],
+        "summary": "Register New Employee",
+        "description": "Add a new employee to the HR directory. Admin and Manager roles only.",
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/EmployeeCreateRequest" } } }
+        },
+        "responses": {
+          "201": {
+            "description": "Employee registered successfully",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Employee" } } }
+          },
+          "400": { "description": "Validation error — duplicate email or missing fields" }
         }
       }
     },
     "/finance/transactions": {
       "get": {
         "tags": ["Finance"],
-        "summary": "List all transactions",
+        "summary": "List All Transactions",
+        "description": "Retrieve all financial transactions (income and expenses). Supports filtering by type (INCOME/EXPENSE) and date range.",
+        "parameters": [
+          { "name": "type", "in": "query", "required": false, "schema": { "type": "string", "enum": ["INCOME", "EXPENSE"], "example": "EXPENSE" }, "description": "Filter by transaction type" },
+          { "name": "startDate", "in": "query", "required": false, "schema": { "type": "string", "format": "date", "example": "2026-08-01" }, "description": "Start date for range filter" },
+          { "name": "endDate", "in": "query", "required": false, "schema": { "type": "string", "format": "date", "example": "2026-08-31" }, "description": "End date for range filter" }
+        ],
         "responses": {
-          "200": { "description": "Array of transactions" }
+          "200": {
+            "description": "Array of financial transactions",
+            "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/Transaction" } } } }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Finance"],
+        "summary": "Record New Transaction",
+        "description": "Record a new income or expense transaction in the finance ledger.",
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/TransactionCreateRequest" } } }
+        },
+        "responses": {
+          "201": {
+            "description": "Transaction recorded",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Transaction" } } }
+          }
+        }
+      }
+    },
+    "/finance/profit-loss": {
+      "get": {
+        "tags": ["Finance"],
+        "summary": "Get Profit & Loss Report",
+        "description": "Calculate total income, total expenses, and net profit for a specified date range.",
+        "parameters": [
+          { "name": "startDate", "in": "query", "required": false, "schema": { "type": "string", "format": "date", "example": "2026-07-01" } },
+          { "name": "endDate", "in": "query", "required": false, "schema": { "type": "string", "format": "date", "example": "2026-07-31" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Profit & Loss summary",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "totalIncome": { "type": "number", "example": 42000.00 },
+                    "totalExpenses": { "type": "number", "example": 28500.00 },
+                    "netProfit": { "type": "number", "example": 13500.00 },
+                    "startDate": { "type": "string", "example": "2026-07-01" },
+                    "endDate": { "type": "string", "example": "2026-07-31" }
+                  }
+                }
+              }
+            }
+          }
         }
       }
     },
     "/dashboard/health": {
       "get": {
         "tags": ["Dashboard"],
-        "summary": "Get Business Health Score",
+        "summary": "Get AI Business Health Score",
+        "description": "Returns a composite 0–100 health score computed from 4 weighted components: Inventory Turnover (20%), Sales Growth (30%), Cash Flow Ratio (30%), and Collection Efficiency (20%). Includes an AI-generated natural-language summary.",
         "responses": {
-          "200": { "description": "Score and AI summary" }
+          "200": {
+            "description": "Business health score with component breakdown and AI summary",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/HealthScore" } } }
+          }
+        }
+      }
+    },
+    "/dashboard/widgets": {
+      "get": {
+        "tags": ["Dashboard"],
+        "summary": "Get Dashboard Widget Data",
+        "description": "Returns aggregated data for all dashboard widgets: stat cards, sales trends, top products, upcoming payments, attendance snapshot, calendar events, and more.",
+        "responses": {
+          "200": {
+            "description": "Aggregated widget data for the dashboard",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "stats": {
+                      "type": "object",
+                      "properties": {
+                        "totalRevenue": { "type": "number", "example": 24580.00 },
+                        "totalOrders": { "type": "integer", "example": 156 },
+                        "inventoryValue": { "type": "number", "example": 89200.00 },
+                        "activeEmployees": { "type": "integer", "example": 28 }
+                      }
+                    },
+                    "salesTrend": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "month": { "type": "string", "example": "Aug 2026" },
+                          "revenue": { "type": "number", "example": 24580.00 }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/customers": {
+      "get": {
+        "tags": ["Customers"],
+        "summary": "List All Customers",
+        "description": "Retrieve the customer directory with contact info and purchase history summaries.",
+        "responses": {
+          "200": {
+            "description": "Array of customers",
+            "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/Customer" } } } }
+          }
+        }
+      }
+    },
+    "/suppliers": {
+      "get": {
+        "tags": ["Suppliers"],
+        "summary": "List All Suppliers",
+        "description": "Retrieve the supplier directory with contact info and total purchase history.",
+        "responses": {
+          "200": {
+            "description": "Array of suppliers",
+            "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/Supplier" } } } }
+          }
         }
       }
     }

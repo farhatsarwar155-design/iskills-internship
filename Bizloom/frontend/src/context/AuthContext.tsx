@@ -18,8 +18,9 @@ interface AuthContextType {
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
-  register: (email: string, password: string, name: string, role: string) => Promise<any>;
+  register: (email: string, password: string, name: string) => Promise<any>;
   verifyOTP: (email: string, otp: string) => Promise<any>;
+  resendOTP: (email: string) => Promise<any>;
   logout: () => Promise<void>;
 }
 
@@ -81,7 +82,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const handleExpired = () => {
       handleLogoutState();
-      if (!['/login', '/register'].includes(pathname)) {
+      if (!['/', '/login', '/register', '/verify-email'].includes(pathname)) {
         router.push('/login');
       }
     };
@@ -110,7 +111,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch (error: any) {
       const errRes = error.response?.data;
       if (errRes?.code === 'EMAIL_UNVERIFIED') {
-        const err = new Error(errRes.message || 'Email address unverified') as any;
+        const err = new Error(errRes.message || 'Please verify your email before logging in') as any;
         err.email = errRes.email;
         err.mockOtp = errRes.mockOtp;
         err.isUnverified = true;
@@ -122,10 +123,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const register = async (email: string, password: string, name: string, role: string) => {
+  const register = async (email: string, password: string, name: string) => {
     setIsLoading(true);
     try {
-      const response = await api.post('/auth/register', { email, password, name, role });
+      const response = await api.post('/auth/register', { email, password, name });
       return response.data;
     } catch (error: any) {
       throw new Error(error.response?.data?.message || 'Registration failed');
@@ -140,9 +141,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const response = await api.post('/auth/verify-otp', { email, otp });
       return response.data;
     } catch (error: any) {
-      throw new Error(error.response?.data?.message || 'OTP Verification failed');
+      const errRes = error.response?.data;
+      const err = new Error(errRes?.message || 'Verification failed') as any;
+      err.code = errRes?.code;
+      throw err;
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const resendOTP = async (email: string) => {
+    try {
+      const response = await api.post('/auth/resend-otp', { email });
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.message || 'Failed to resend OTP');
     }
   };
 
@@ -170,6 +183,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         login,
         register,
         verifyOTP,
+        resendOTP,
         logout,
       }}
     >

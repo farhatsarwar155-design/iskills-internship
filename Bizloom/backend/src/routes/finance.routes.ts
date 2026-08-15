@@ -15,12 +15,12 @@ router.use(authenticateJWT);
 router.use(auditLogger('FINANCE'));
 
 // Transaction routes
-router.get('/transactions', requireRoles(['ADMIN', 'ACCOUNTANT', 'MANAGER']), getTransactions);
+router.get('/transactions', requireRoles(['ADMIN', 'ACCOUNTANT']), getTransactions);
 router.post('/transactions', requireRoles(['ADMIN', 'ACCOUNTANT']), createTransaction);
 router.delete('/transactions/:id', requireRoles(['ADMIN', 'ACCOUNTANT']), deleteTransaction);
 
 // Ledger & Summary routes
-router.get('/ledger', requireRoles(['ADMIN', 'ACCOUNTANT', 'MANAGER']), getLedger);
-router.get('/summary', requireRoles(['ADMIN', 'ACCOUNTANT', 'MANAGER']), getProfitLossSummary);
+router.get('/ledger', requireRoles(['ADMIN', 'ACCOUNTANT']), getLedger);
+router.get('/summary', requireRoles(['ADMIN', 'ACCOUNTANT']), getProfitLossSummary);
 
 export default router;

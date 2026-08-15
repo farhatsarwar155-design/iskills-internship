@@ -38,12 +38,29 @@ export const authenticateJWT = (req: AuthenticatedRequest, res: Response, next: 
 };
 
 export const requireRoles = (allowedRoles: string[]) => {
-  return (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+  return async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     if (!req.user) {
       return res.status(401).json({ message: 'User not authenticated' });
     }
 
     if (!allowedRoles.includes(req.user.role)) {
+      // ── Log the unauthorized access attempt to SystemLog ──────────────
+      const attemptedRoute = req.method + ' ' + req.originalUrl;
+      try {
+        const { logAction } = await import('../utils/logger');
+        await logAction({
+          userId: req.user.id,
+          userEmail: req.user.email,
+          action: 'UNAUTHORIZED_ACCESS',
+          module: 'ACCESS_CONTROL',
+          description: `Access denied for role [${req.user.role}] on route: ${attemptedRoute}. Required roles: [${allowedRoles.join(', ')}]`,
+          ipAddress: req.ip,
+          severity: 'WARNING'
+        });
+      } catch (err) {
+        console.error('Failed to write access-denied audit log:', err);
+      }
+
       return res.status(403).json({
         message: `Forbidden: Access restricted. Required roles: [${allowedRoles.join(', ')}]. Your role: ${req.user.role}`
       });

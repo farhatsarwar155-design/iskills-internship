@@ -15,7 +15,7 @@ export default function RegisterPage() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [role, setRole] = useState('EMPLOYEE');
+  const [confirmPassword, setConfirmPassword] = useState('');
   
   // OTP Verification States
   const [otpCode, setOtpCode] = useState('');
@@ -33,17 +33,32 @@ export default function RegisterPage() {
 
   const handleRegisterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name || !email || !password || !role) {
+    if (!name || !email || !password || !confirmPassword) {
       toast.error('Please fill out all fields');
+      return;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      toast.error('Please enter a valid email address');
+      return;
+    }
+
+    if (password.length < 8) {
+      toast.error('Password must be at least 8 characters long');
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      toast.error('Passwords do not match');
       return;
     }
 
     setSubmitting(true);
     try {
-      const res = await register(email, password, name, role);
-      setMockOtp(res?.mockOtp || null);
-      setStep('OTP');
-      toast.success('Registration successful! Verification OTP sent.');
+      const res = await register(email, password, name);
+      toast.success('Registration successful! Verification code sent.');
+      router.push(`/verify-email?email=${encodeURIComponent(email)}&mockOtp=${encodeURIComponent(res?.mockOtp || '')}`);
     } catch (error: any) {
       toast.error(error.message || 'Registration failed');
     } finally {
@@ -148,12 +163,12 @@ export default function RegisterPage() {
 
               <div className="mt-8">
                 <Card className="border-0 shadow-none bg-transparent">
-                  <form onSubmit={handleRegisterSubmit} className="space-y-5">
+                  <form onSubmit={handleRegisterSubmit} className="space-y-4">
                     <div>
                       <label htmlFor="name" className="block text-sm font-semibold leading-6 text-neutral-800 dark:text-neutral-200">
                         Full Name
                       </label>
-                      <div className="relative mt-2 rounded-md shadow-sm">
+                      <div className="relative mt-1.5 rounded-md shadow-sm">
                         <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
                           <User className="h-5 w-5 text-neutral-400 dark:text-neutral-500" />
                         </div>
@@ -162,7 +177,7 @@ export default function RegisterPage() {
                           name="name"
                           type="text"
                           required
-                          placeholder="Farhat Sarwar"
+                          placeholder="Jane Doe"
                           value={name}
                           onChange={(e) => setName(e.target.value)}
                           className="pl-10 h-11 rounded-xl bg-slate-50 dark:bg-neutral-950 border-neutral-200 dark:border-neutral-800 focus-visible:ring-indigo-600 focus-visible:ring-2"
@@ -174,7 +189,7 @@ export default function RegisterPage() {
                       <label htmlFor="email" className="block text-sm font-semibold leading-6 text-neutral-800 dark:text-neutral-200">
                         Email address
                       </label>
-                      <div className="relative mt-2 rounded-md shadow-sm">
+                      <div className="relative mt-1.5 rounded-md shadow-sm">
                         <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
                           <Mail className="h-5 w-5 text-neutral-400 dark:text-neutral-500" />
                         </div>
@@ -183,7 +198,7 @@ export default function RegisterPage() {
                           name="email"
                           type="email"
                           required
-                          placeholder="anyname@gmail.com, yahoo.com, etc."
+                          placeholder="jane@company.com"
                           value={email}
                           onChange={(e) => setEmail(e.target.value)}
                           className="pl-10 h-11 rounded-xl bg-slate-50 dark:bg-neutral-950 border-neutral-200 dark:border-neutral-800 focus-visible:ring-indigo-600 focus-visible:ring-2"
@@ -195,7 +210,7 @@ export default function RegisterPage() {
                       <label htmlFor="password" className="block text-sm font-semibold leading-6 text-neutral-800 dark:text-neutral-200">
                         Password
                       </label>
-                      <div className="relative mt-2 rounded-md shadow-sm">
+                      <div className="relative mt-1.5 rounded-md shadow-sm">
                         <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
                           <Lock className="h-5 w-5 text-neutral-400 dark:text-neutral-500" />
                         </div>
@@ -204,7 +219,7 @@ export default function RegisterPage() {
                           name="password"
                           type="password"
                           required
-                          placeholder="••••••••"
+                          placeholder="At least 8 characters"
                           value={password}
                           onChange={(e) => setPassword(e.target.value)}
                           className="pl-10 h-11 rounded-xl bg-slate-50 dark:bg-neutral-950 border-neutral-200 dark:border-neutral-800 focus-visible:ring-indigo-600 focus-visible:ring-2"
@@ -213,25 +228,23 @@ export default function RegisterPage() {
                     </div>
 
                     <div>
-                      <label htmlFor="role" className="block text-sm font-semibold leading-6 text-neutral-800 dark:text-neutral-200">
-                        Organization Role
+                      <label htmlFor="confirmPassword" className="block text-sm font-semibold leading-6 text-neutral-800 dark:text-neutral-200">
+                        Confirm Password
                       </label>
-                      <div className="relative mt-2 rounded-md shadow-sm">
+                      <div className="relative mt-1.5 rounded-md shadow-sm">
                         <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                          <Briefcase className="h-5 w-5 text-neutral-400 dark:text-neutral-500" />
+                          <Lock className="h-5 w-5 text-neutral-400 dark:text-neutral-500" />
                         </div>
-                        <select
-                          id="role"
-                          name="role"
-                          value={role}
-                          onChange={(e) => setRole(e.target.value)}
-                          className="flex h-11 w-full rounded-xl border border-neutral-200 bg-slate-50 pl-10 pr-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-indigo-600 dark:border-neutral-800 dark:bg-neutral-950 dark:text-neutral-200 font-semibold"
-                        >
-                          <option value="EMPLOYEE">Employee</option>
-                          <option value="MANAGER">Manager</option>
-                          <option value="ACCOUNTANT">Accountant</option>
-                          <option value="ADMIN">Admin</option>
-                        </select>
+                        <Input
+                          id="confirmPassword"
+                          name="confirmPassword"
+                          type="password"
+                          required
+                          placeholder="Re-enter password"
+                          value={confirmPassword}
+                          onChange={(e) => setConfirmPassword(e.target.value)}
+                          className="pl-10 h-11 rounded-xl bg-slate-50 dark:bg-neutral-950 border-neutral-200 dark:border-neutral-800 focus-visible:ring-indigo-600 focus-visible:ring-2"
+                        />
                       </div>
                     </div>
 
@@ -239,7 +252,7 @@ export default function RegisterPage() {
                       <Button
                         type="submit"
                         disabled={submitting}
-                        className="w-full h-11 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/20"
+                        className="w-full h-11 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/20 cursor-pointer"
                       >
                         {submitting ? (
                           <>

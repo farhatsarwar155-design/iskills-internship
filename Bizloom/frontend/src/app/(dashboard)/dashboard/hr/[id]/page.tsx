@@ -337,7 +337,8 @@ export default function EmployeeDetailPage() {
               <div className="space-y-1 bg-slate-50/50 dark:bg-neutral-950/20 p-3.5 rounded-xl border">
                 <span className="font-bold text-neutral-400 uppercase tracking-widest text-3xs">Monthly Base Salary</span>
                 <p className="font-bold text-neutral-850 dark:text-neutral-250 flex items-center gap-2 mt-1">
-                  <DollarSign className="h-4 w-4 text-neutral-400" /> ${employee.salary.toLocaleString()} / month
+                  <DollarSign className="h-4 w-4 text-neutral-400" /> 
+                  {user?.role === 'ADMIN' ? `$${employee.salary.toLocaleString()} / month` : '•••••••• (Admin Only)'}
                 </p>
               </div>
 
@@ -665,13 +666,18 @@ export default function EmployeeDetailPage() {
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-neutral-700 dark:text-neutral-300 uppercase tracking-wider">Monthly Base ($) *</label>
+                <div className="flex justify-between items-center">
+                  <label className="text-xs font-bold text-neutral-700 dark:text-neutral-300 uppercase tracking-wider">Monthly Base ($) *</label>
+                  {user?.role !== 'ADMIN' && <span className="text-[9px] text-rose-500 font-bold uppercase">Admin Only</span>}
+                </div>
                 <Input
                   name="salary"
                   type="number"
-                  value={editData.salary}
+                  value={user?.role !== 'ADMIN' ? '' : editData.salary}
                   onChange={handleEditChange}
                   className={`h-10 rounded-xl border-neutral-200 dark:border-neutral-800 ${editErrors.salary ? 'border-rose-500' : ''}`}
+                  placeholder={user?.role !== 'ADMIN' ? "••••••••" : ""}
+                  disabled={user?.role !== 'ADMIN'}
                 />
               </div>
 

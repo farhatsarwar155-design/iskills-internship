@@ -427,3 +427,377 @@ export const getBusinessHealthScore = async (req: AuthenticatedRequest, res: Res
     res.status(500).json({ message: 'Error retrieving health score' });
   }
 };
+
+export const getDashboardWidgets = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const endOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
+    const sevenDaysFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+
+    // 1. GREETING SUMMARY DATA (real counts)
+    const [pendingInvoiceCount, lowStockCount, pendingPOCount] = await Promise.all([
+      prisma.order.count({ where: { status: { in: ['UNPAID', 'PARTIAL'] } } }),
+      prisma.product.count({ where: { quantity: { lte: 5 } } }),
+      prisma.purchaseOrder.count({ where: { status: 'PENDING' } })
+    ]);
+    const greetingSummary = `You have ${pendingInvoiceCount} pending invoice${pendingInvoiceCount !== 1 ? 's' : ''}, ${lowStockCount} low-stock item${lowStockCount !== 1 ? 's' : ''}, and ${pendingPOCount} purchase order${pendingPOCount !== 1 ? 's' : ''} awaiting approval.`;
+
+    // 2. TOP PRODUCTS THIS MONTH
+    const orderItemsThisMonth = await prisma.orderItem.findMany({
+      where: { order: { createdAt: { gte: startOfMonth } } },
+      include: { product: { select: { id: true, name: true, category: true } } }
+    });
+    const productSalesMap: Record<string, { name: string; category: string; unitsSold: number }> = {};
+    for (const item of orderItemsThisMonth) {
+      if (!productSalesMap[item.productId]) {
+        productSalesMap[item.productId] = { name: item.product.name, category: item.product.category, unitsSold: 0 };
+      }
+      productSalesMap[item.productId].unitsSold += item.quantity;
+    }
+    const topProducts = Object.entries(productSalesMap)
+      .map(([id, data]) => ({ id, ...data }))
+      .sort((a, b) => b.unitsSold - a.unitsSold)
+      .slice(0, 5);
+    const maxUnits = topProducts[0]?.unitsSold || 1;
+
+    // 3. UPCOMING PAYMENTS (orders due within 7 days or overdue)
+    const unpaidOrders = await prisma.order.findMany({
+      where: { status: { in: ['UNPAID', 'PARTIAL'] } },
+      include: { customer: { select: { name: true } } },
+      orderBy: { createdAt: 'asc' },
+      take: 8
+    });
+    const upcomingPayments = unpaidOrders.map(order => {
+      // Estimate due date: createdAt + 30 days (standard NET 30)
+      const dueDate = new Date(order.createdAt);
+      if (order.paymentTerms === 'NET 15') dueDate.setDate(dueDate.getDate() + 15);
+      else if (order.paymentTerms === 'NET 60') dueDate.setDate(dueDate.getDate() + 60);
+      else dueDate.setDate(dueDate.getDate() + 30);
+
+      const daysUntilDue = Math.ceil((dueDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+      let urgency: 'overdue' | 'due_soon' | 'upcoming' = 'upcoming';
+      if (daysUntilDue < 0) urgency = 'overdue';
+      else if (daysUntilDue <= 3) urgency = 'due_soon';
+
+      return {
+        id: order.id,
+        orderNumber: order.orderNumber,
+        customer: order.customer.name,
+        amount: order.total,
+        dueDate: dueDate.toISOString().split('T')[0],
+        daysUntilDue,
+        urgency
+      };
+    }).filter(p => p.daysUntilDue <= 7).sort((a, b) => a.daysUntilDue - b.daysUntilDue);
+
+    // 4. TODAY'S ATTENDANCE SNAPSHOT
+    const todayAttendance = await prisma.attendance.findMany({
+      where: { date: { gte: startOfToday, lte: endOfToday } }
+    });
+    const totalEmployees = await prisma.employee.count({ where: { status: 'ACTIVE' } });
+    const presentCount = todayAttendance.filter(a => a.status === 'PRESENT' || a.status === 'LATE').length;
+    const absentCount = todayAttendance.filter(a => a.status === 'ABSENT').length;
+    const leaveCount = totalEmployees - presentCount - absentCount;
+    const attendanceSnapshot = {
+      present: presentCount,
+      absent: absentCount,
+      onLeave: Math.max(0, leaveCount),
+      total: totalEmployees
+    };
+
+    // 5. MONTHLY SALES TARGET
+    const salesThisMonth = await prisma.order.aggregate({
+      _sum: { total: true },
+      _count: true,
+      where: { createdAt: { gte: startOfMonth } }
+    });
+    const achievedSales = salesThisMonth._sum.total || 0;
+    const orderCountThisMonth = salesThisMonth._count || 0;
+    const DEFAULT_TARGET = 50000;
+    const salesTarget = {
+      achieved: achievedSales,
+      target: DEFAULT_TARGET,
+      percentage: Math.min(100, Math.round((achievedSales / DEFAULT_TARGET) * 100))
+    };
+
+    // 6. MINI CALENDAR EVENTS
+    // Fetch unpaid order due dates, pending PO dates, and attendance leave records for current month
+    const calendarEvents: Record<string, { type: 'invoice' | 'leave' | 'purchase'; title: string; detail: string }[]> = {};
+
+    unpaidOrders.forEach(order => {
+      const dueDate = new Date(order.createdAt);
+      if (order.paymentTerms === 'NET 15') dueDate.setDate(dueDate.getDate() + 15);
+      else if (order.paymentTerms === 'NET 60') dueDate.setDate(dueDate.getDate() + 60);
+      else dueDate.setDate(dueDate.getDate() + 30);
+
+      const dateStr = dueDate.toISOString().split('T')[0];
+      if (!calendarEvents[dateStr]) calendarEvents[dateStr] = [];
+      calendarEvents[dateStr].push({
+        type: 'invoice',
+        title: `Invoice Due: ${order.orderNumber}`,
+        detail: `${order.customer} - $${order.total.toFixed(2)}`
+      });
+    });
+
+    const pendingPOs = await prisma.purchaseOrder.findMany({
+      where: { status: 'PENDING' },
+      include: { supplier: { select: { name: true } } },
+      take: 10
+    });
+    pendingPOs.forEach(po => {
+      const expectedDate = new Date(po.createdAt);
+      expectedDate.setDate(expectedDate.getDate() + 7); // Estimated 7 days delivery
+      const dateStr = expectedDate.toISOString().split('T')[0];
+      if (!calendarEvents[dateStr]) calendarEvents[dateStr] = [];
+      calendarEvents[dateStr].push({
+        type: 'purchase',
+        title: `PO Expected: ${po.orderNumber}`,
+        detail: `${po.supplier.name} - $${po.total.toFixed(2)}`
+      });
+    });
+
+    const leaveAttendance = await prisma.attendance.findMany({
+      where: { status: 'ABSENT' },
+      include: { employee: { select: { name: true } } },
+      take: 10
+    });
+    leaveAttendance.forEach(att => {
+      const dateStr = new Date(att.date).toISOString().split('T')[0];
+      if (!calendarEvents[dateStr]) calendarEvents[dateStr] = [];
+      calendarEvents[dateStr].push({
+        type: 'leave',
+        title: `Employee Leave`,
+        detail: `${att.employee.name} (Absent/On Leave)`
+      });
+    });
+
+    // 7. QUICK INSIGHTS
+    const quickInsights: { id: string; type: 'growth' | 'warning' | 'peak'; icon: string; title: string; description: string }[] = [];
+
+    // Insight 1: Top sales category
+    const categoryAgg: Record<string, number> = {};
+    orderItemsThisMonth.forEach(item => {
+      const cat = item.product.category || 'General';
+      categoryAgg[cat] = (categoryAgg[cat] || 0) + (item.price * item.quantity);
+    });
+    const topCat = Object.entries(categoryAgg).sort((a, b) => b[1] - a[1])[0];
+    if (topCat) {
+      quickInsights.push({
+        id: 'top-cat',
+        type: 'growth',
+        icon: 'TrendingUp',
+        title: `${topCat[0]} Category Leading`,
+        description: `Generated $${topCat[1].toLocaleString(undefined, { minimumFractionDigits: 2 })} in sales this month.`
+      });
+    }
+
+    // Insight 2: Inactive customers (no orders in last 60 days)
+    const sixtyDaysAgo = new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000);
+    const activeCustomerIds = (await prisma.order.findMany({
+      where: { createdAt: { gte: sixtyDaysAgo } },
+      select: { customerId: true }
+    })).map(o => o.customerId);
+    const inactiveCount = await prisma.customer.count({
+      where: { id: { notIn: activeCustomerIds } }
+    });
+    quickInsights.push({
+      id: 'inactive-cust',
+      type: 'warning',
+      icon: 'AlertTriangle',
+      title: `${inactiveCount} Inactive Customers`,
+      description: `Haven't placed an order in 60+ days. Consider sending a re-engagement offer.`
+    });
+
+    // Insight 3: Peak sales day this month
+    const ordersThisMonth = await prisma.order.findMany({
+      where: { createdAt: { gte: startOfMonth } },
+      select: { total: true, createdAt: true }
+    });
+    const daySalesMap: Record<string, number> = {};
+    ordersThisMonth.forEach(o => {
+      const dayStr = new Date(o.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      daySalesMap[dayStr] = (daySalesMap[dayStr] || 0) + o.total;
+    });
+    const peakDay = Object.entries(daySalesMap).sort((a, b) => b[1] - a[1])[0];
+    if (peakDay) {
+      quickInsights.push({
+        id: 'peak-day',
+        type: 'peak',
+        icon: 'Calendar',
+        title: `Peak Sales Day: ${peakDay[0]}`,
+        description: `Highest revenue recorded in a single day ($${peakDay[1].toLocaleString(undefined, { minimumFractionDigits: 2 })}).`
+      });
+    } else {
+      quickInsights.push({
+        id: 'peak-day',
+        type: 'peak',
+        icon: 'Calendar',
+        title: `Sales Activity Stable`,
+        description: `Consistent order volume across the current billing period.`
+      });
+    }
+
+    // 8. GOAL MILESTONES TRACKER
+    const activeProductCount = await prisma.product.count();
+    const goalMilestones = [
+      {
+        id: 'm1',
+        title: 'Monthly Revenue Goal',
+        target: DEFAULT_TARGET,
+        current: Math.round(achievedSales),
+        unit: '$',
+        isCurrency: true,
+      },
+      {
+        id: 'm2',
+        title: 'Monthly Order Count',
+        target: 50,
+        current: orderCountThisMonth,
+        unit: 'orders',
+        isCurrency: false,
+      },
+      {
+        id: 'm3',
+        title: 'Active Catalog Size',
+        target: 20,
+        current: activeProductCount,
+        unit: 'products',
+        isCurrency: false,
+      }
+    ];
+
+    // 9. CASH FLOW SNAPSHOT (last 6 months)
+    const cashFlowHistory = [];
+    let grandTotalIncome = 0;
+    let grandTotalExpense = 0;
+
+    for (let i = 5; i >= 0; i--) {
+      const monthStart = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const monthEnd = new Date(now.getFullYear(), now.getMonth() - i + 1, 0, 23, 59, 59);
+      const monthLabel = monthStart.toLocaleString('en-US', { month: 'short' });
+
+      const incomeAgg = await prisma.transaction.aggregate({
+        _sum: { amount: true },
+        where: { type: 'INCOME', date: { gte: monthStart, lte: monthEnd } }
+      });
+      const expenseAgg = await prisma.transaction.aggregate({
+        _sum: { amount: true },
+        where: { type: 'EXPENSE', date: { gte: monthStart, lte: monthEnd } }
+      });
+
+      const inc = incomeAgg._sum.amount || 0;
+      const exp = expenseAgg._sum.amount || 0;
+      grandTotalIncome += inc;
+      grandTotalExpense += exp;
+
+      cashFlowHistory.push({
+        month: monthLabel,
+        income: Math.round(inc),
+        expense: Math.round(exp)
+      });
+    }
+    const netCashFlow = grandTotalIncome - grandTotalExpense;
+
+    const cashFlowSnapshot = {
+      history: cashFlowHistory,
+      totalIncome: grandTotalIncome,
+      totalExpense: grandTotalExpense,
+      netCashFlow
+    };
+
+    // 10. CUSTOMER INSIGHTS
+    const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const endOfLastMonth = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59);
+
+    const newCustomersThisMonth = await prisma.customer.count({
+      where: { createdAt: { gte: startOfMonth } }
+    });
+    const newCustomersLastMonth = await prisma.customer.count({
+      where: { createdAt: { gte: startOfLastMonth, lte: endOfLastMonth } }
+    });
+    const customerTrendPct = newCustomersLastMonth > 0
+      ? Math.round(((newCustomersThisMonth - newCustomersLastMonth) / newCustomersLastMonth) * 100)
+      : (newCustomersThisMonth > 0 ? 100 : 0);
+
+    // Top Customer by total spend
+    const customerSpendAgg = await prisma.order.groupBy({
+      by: ['customerId'],
+      _sum: { total: true },
+      orderBy: { _sum: { total: 'desc' } },
+      take: 1
+    });
+    let topCustomer = { name: 'N/A', totalSpent: 0 };
+    if (customerSpendAgg.length > 0) {
+      const cust = await prisma.customer.findUnique({
+        where: { id: customerSpendAgg[0].customerId },
+        select: { name: true }
+      });
+      if (cust) {
+        topCustomer = { name: cust.name, totalSpent: customerSpendAgg[0]._sum.total || 0 };
+      }
+    }
+
+    // Repeat customer rate
+    const totalCustomersCount = await prisma.customer.count();
+    const customerOrderCounts = await prisma.order.groupBy({
+      by: ['customerId'],
+      _count: { id: true }
+    });
+    const repeatCustomersCount = customerOrderCounts.filter(c => c._count.id > 1).length;
+    const repeatCustomerRate = totalCustomersCount > 0
+      ? Math.round((repeatCustomersCount / totalCustomersCount) * 100)
+      : 0;
+
+    const customerInsights = {
+      newCustomers: newCustomersThisMonth,
+      customerTrendPct,
+      topCustomer,
+      repeatCustomerRate
+    };
+
+    // 11. LOW STOCK PRIORITY LIST
+    const lowStockProducts = await prisma.product.findMany({
+      where: { quantity: { lte: 10 } },
+      orderBy: { quantity: 'asc' },
+      take: 5,
+      select: { id: true, name: true, sku: true, quantity: true, minStockLevel: true, cost: true }
+    });
+
+    const lowStockPriority = lowStockProducts.map(p => {
+      let urgency: 'Critical' | 'Low' | 'Watch' = 'Watch';
+      if (p.quantity === 0) urgency = 'Critical';
+      else if (p.quantity <= p.minStockLevel) urgency = 'Low';
+
+      const suggestedReorder = Math.max(10, (p.minStockLevel * 2) - p.quantity);
+
+      return {
+        id: p.id,
+        name: p.name,
+        sku: p.sku,
+        quantity: p.quantity,
+        minStockLevel: p.minStockLevel,
+        urgency,
+        suggestedReorder
+      };
+    });
+
+    res.json({
+      greetingSummary,
+      topProducts: topProducts.map(p => ({ ...p, relativeWidth: Math.round((p.unitsSold / maxUnits) * 100) })),
+      upcomingPayments,
+      attendanceSnapshot,
+      salesTarget,
+      calendarEvents,
+      quickInsights,
+      goalMilestones,
+      cashFlowSnapshot,
+      customerInsights,
+      lowStockPriority
+    });
+  } catch (error) {
+    console.error('Error fetching dashboard widgets:', error);
+    res.status(500).json({ message: 'Error retrieving dashboard widgets' });
+  }
+};
