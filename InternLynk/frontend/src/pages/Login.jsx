@@ -63,16 +63,16 @@ export default function Login() {
     return () => clearInterval(interval)
   }, [resendTimer])
 
-  const sendOtpCode = async (targetEmail) => {
+  const sendOtpCode = async (targetEmail, role = 'user') => {
     try {
       const response = await fetch('/api/auth/send-otp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: targetEmail })
+        body: JSON.stringify({ email: targetEmail, role })
       })
       const data = await response.json()
       if (response.ok) {
-        toast.success('Verification code sent to your registered Gmail!')
+        toast.success('📱 Verification code sent to your Gmail!')
         setResendTimer(30)
         return true
       } else {
@@ -103,18 +103,22 @@ export default function Login() {
       })
       const resData = await response.json()
       if (response.ok) {
-        toast.success('2FA authorized successfully!')
-        setShowOtp(false)
+        toast.success('✅ 2FA verification successful! Redirecting...')
         
-        // Final transition to authorized dashboard
-        const map = {
+        // Determine correct dashboard from context profile or pending role
+        const roleMap = {
           student: '/dashboard/student',
           guest: '/dashboard/guest',
           university: '/dashboard/university',
           software_house: '/dashboard/software-house',
           admin: '/dashboard/admin',
         }
-        navigate(map[pendingUserRole] || '/dashboard', { replace: true })
+        const targetRole = profile?.role || pendingUserRole
+        const destination = roleMap[targetRole] || '/dashboard'
+        
+        // Clear OTP screen then navigate
+        setShowOtp(false)
+        navigate(destination, { replace: true })
       } else {
         setOtpError(resData.error || 'Invalid OTP verification code')
       }
@@ -171,7 +175,7 @@ export default function Login() {
         setPendingUserRole(userRole)
         
         // Trigger 2FA OTP delivery
-        const otpSent = await sendOtpCode(email.trim())
+        const otpSent = await sendOtpCode(email.trim(), userRole)
         if (otpSent) {
           setShowOtp(true)
         }
@@ -221,12 +225,25 @@ export default function Login() {
                 </div>
                 <h2 className="text-xl font-bold text-white">Two-Step Verification</h2>
                 <p className="text-blue-200 text-xs mt-1.5 leading-relaxed">
-                  We've sent a 6-digit security verification code to your registered email:
+                  A 6-digit security code has been sent to your Gmail:
                 </p>
                 <p className="text-white font-semibold text-sm mt-1">
                   {email.replace(/(.{2})(.*)(?=@)/, (gp1, gp2, gp3) => gp2 + gp3.replace(/./g, '*'))}
                 </p>
               </div>
+
+              {/* Admin security warning */}
+              {(pendingUserRole === 'admin' || selectedRole === 'admin') && (
+                <div className="flex items-start gap-2 bg-amber-500/15 border border-amber-400/30 rounded-lg px-3 py-2.5">
+                  <svg className="w-4 h-4 text-amber-300 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                  </svg>
+                  <div>
+                    <p className="text-amber-200 text-xs font-semibold">Admin Security Check</p>
+                    <p className="text-amber-300/80 text-xs mt-0.5">Check your private admin Gmail on your mobile. Do not share this code with anyone.</p>
+                  </div>
+                </div>
+              )}
 
               {otpError && (
                 <div className="flex items-start gap-2 bg-rose-500/20 border border-rose-400/30 rounded-lg px-4 py-3 text-rose-200 text-xs">

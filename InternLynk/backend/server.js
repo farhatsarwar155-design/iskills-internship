@@ -373,12 +373,13 @@ app.post('/api/profile/upload-picture', upload.single('picture'), async (req, re
 // Send 6-digit OTP to user's email
 app.post('/api/auth/send-otp', async (req, res) => {
   try {
-    const { email } = req.body || {}
+    const { email, role } = req.body || {}
     if (!email) {
       return res.status(400).json({ error: 'Email is required for OTP delivery' })
     }
 
     const cleanEmail = email.trim().toLowerCase()
+    const isAdmin = role === 'admin'
     
     // Generate 6-digit cryptographically random OTP
     const otp = Math.floor(100000 + Math.random() * 900000).toString()
@@ -390,36 +391,62 @@ app.post('/api/auth/send-otp', async (req, res) => {
       attempts: 0,
     })
 
-    console.log(`[2FA OTP] Generated 6-digit OTP for ${cleanEmail}: ${otp}`)
+    console.log(`[2FA OTP] Generated OTP for ${cleanEmail} (role: ${role || 'user'})`)
 
     // Attempt email delivery if SMTP user is configured
     if (process.env.SMTP_USER && process.env.SMTP_PASS) {
       try {
+        const subject = isAdmin
+          ? `🔐 [ADMIN] InternLynk Admin Portal Security Code`
+          : `🔐 Your InternLynk Verification Code`
+
+        const adminWarning = isAdmin ? `
+          <div style="background-color:#fff3cd;border:1px solid #ffc107;border-radius:8px;padding:12px 16px;margin-bottom:16px;">
+            <p style="color:#856404;font-size:13px;font-weight:700;margin:0 0 4px;">⚠️ Admin Account Login Detected</p>
+            <p style="color:#856404;font-size:12px;margin:0;">If you did not initiate this login, immediately secure your account and contact your system administrator.</p>
+          </div>` : ''
+
         await transporter.sendMail({
           from: `"InternLynk Security" <${process.env.SMTP_USER}>`,
           to: cleanEmail,
-          subject: `🔐 Your InternLynk 2FA Verification Code: ${otp}`,
+          subject,
           html: `
-            <div style="font-family: Arial, sans-serif; max-width: 500px; margin: 0 auto; padding: 24px; border: 1px solid #e2e8f0; border-radius: 16px; background-color: #ffffff;">
-              <h2 style="color: #2563eb; margin-bottom: 8px;">InternLynk Security Verification</h2>
-              <p style="color: #475569; font-size: 14px;">Use the following 6-digit OTP verification code to complete your secure login:</p>
-              <div style="background-color: #f1f5f9; padding: 16px; border-radius: 12px; text-align: center; margin: 20px 0;">
-                <span style="font-size: 32px; font-weight: 800; letter-spacing: 8px; color: #1e293b;">${otp}</span>
+            <div style="font-family: Arial, sans-serif; max-width: 520px; margin: 0 auto; padding: 0; border-radius: 16px; overflow: hidden; border: 1px solid #e2e8f0;">
+              <!-- Header -->
+              <div style="background: linear-gradient(135deg, #1e40af, #3b82f6); padding: 28px 32px; text-align: center;">
+                <h1 style="color: #ffffff; font-size: 22px; font-weight: 800; margin: 0; letter-spacing: -0.5px;">InternLynk</h1>
+                <p style="color: #bfdbfe; font-size: 13px; margin: 6px 0 0;">Security Verification</p>
               </div>
-              <p style="color: #64748b; font-size: 12px;">This code will expire in 10 minutes. If you did not attempt to log in, please ignore this message.</p>
+              <!-- Body -->
+              <div style="background: #ffffff; padding: 28px 32px;">
+                ${adminWarning}
+                <p style="color: #374151; font-size: 14px; margin: 0 0 20px;">Use the following verification code to complete your ${isAdmin ? '<strong>admin portal</strong>' : ''} login. <strong>Do not share this code with anyone.</strong></p>
+                
+                <!-- OTP Box -->
+                <div style="background: #f0f9ff; border: 2px dashed #3b82f6; border-radius: 14px; padding: 20px; text-align: center; margin: 0 0 20px;">
+                  <p style="color: #6b7280; font-size: 12px; margin: 0 0 8px; text-transform: uppercase; letter-spacing: 1px;">Your One-Time Code</p>
+                  <span style="font-size: 40px; font-weight: 900; letter-spacing: 12px; color: #1e3a8a; font-family: 'Courier New', monospace;">${otp}</span>
+                  <p style="color: #9ca3af; font-size: 11px; margin: 10px 0 0;">⏱ Expires in 10 minutes</p>
+                </div>
+
+                <p style="color: #9ca3af; font-size: 11px; border-top: 1px solid #f3f4f6; padding-top: 14px; margin: 0;">If you did not request this code, please ignore this email. Your account remains secure.</p>
+              </div>
+              <!-- Footer -->
+              <div style="background: #f8fafc; padding: 14px 32px; text-align: center; border-top: 1px solid #e5e7eb;">
+                <p style="color: #9ca3af; font-size: 11px; margin: 0;">InternLynk Platform — Academic Industry Internship & Talent Linkage</p>
+              </div>
             </div>
           `,
         })
         console.log(`[2FA OTP] Email sent successfully to ${cleanEmail}`)
       } catch (mailErr) {
-        console.error('[2FA OTP] SMTP delivery error (falling back to dev mode):', mailErr.message)
+        console.error('[2FA OTP] SMTP delivery error:', mailErr.message)
       }
     }
 
     res.json({
       success: true,
       message: `Verification code sent to ${cleanEmail}`,
-      debugOtp: process.env.NODE_ENV !== 'production' ? otp : undefined,
     })
   } catch (err) {
     console.error('[2FA OTP] Send error:', err)
