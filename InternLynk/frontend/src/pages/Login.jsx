@@ -70,6 +70,7 @@ export default function Login() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: targetEmail })
       })
+      const data = await response.json()
       if (response.ok) {
         toast.success('Verification code sent to your registered Gmail!')
         setResendTimer(30)
