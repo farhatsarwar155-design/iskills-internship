@@ -245,24 +245,38 @@ export async function fetchApplicationAnalytics(dateFilter = '6months') {
 
   let query = supabase
     .from('applications')
-    .select(`
-      id,
-      status,
-      applied_at,
-      updated_at,
-      user_id,
-      internship_id,
-      profiles:user_id(role),
-      internships:internship_id(title)
-    `)
+    .select('id, status, applied_at, created_at, updated_at, user_id, internship_id')
   
   if (dateRange) {
-    query = query.gte('applied_at', dateRange)
+    query = query.gte('created_at', dateRange)
   }
 
-  const { data: applications, error } = await query.order('applied_at', { ascending: true })
+  const { data: rawApps, error } = await query
 
   if (error) throw error
+
+  // Enrich with profiles and internships
+  let applications = rawApps || []
+  const userIds = [...new Set(applications.map(a => a.user_id).filter(Boolean))]
+  const internshipIds = [...new Set(applications.map(a => a.internship_id).filter(Boolean))]
+
+  let userRoleMap = {}
+  if (userIds.length > 0) {
+    const { data: userProfiles } = await supabase.from('profiles').select('id, role').in('id', userIds)
+    userRoleMap = (userProfiles || []).reduce((acc, p) => ({ ...acc, [p.id]: p.role }), {})
+  }
+
+  let internshipTitleMap = {}
+  if (internshipIds.length > 0) {
+    const { data: intList } = await supabase.from('internships').select('id, title').in('id', internshipIds)
+    internshipTitleMap = (intList || []).reduce((acc, i) => ({ ...acc, [i.id]: i.title }), {})
+  }
+
+  applications = applications.map(a => ({
+    ...a,
+    profiles: { role: userRoleMap[a.user_id] },
+    internships: { title: internshipTitleMap[a.internship_id] },
+  }))
 
   // Calculate metrics
   const totalApplications = applications?.length || 0

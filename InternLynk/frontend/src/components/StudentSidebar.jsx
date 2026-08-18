@@ -106,7 +106,7 @@ export default function StudentSidebar() {
 
   return (
     <>
-      <aside className="w-64 bg-gradient-to-b from-indigo-50 via-blue-50 to-indigo-50 border-r border-indigo-100 shadow-sm h-full flex flex-col justify-between">
+      <aside className="w-64 bg-gradient-to-b from-indigo-50 via-blue-50 to-indigo-50 border-r border-indigo-100 shadow-sm h-full flex flex-col justify-between overflow-y-auto">
         {/* Brand */}
         <div className="px-5 pt-6 pb-4 border-b border-indigo-100">
           <div className="flex items-center gap-3">

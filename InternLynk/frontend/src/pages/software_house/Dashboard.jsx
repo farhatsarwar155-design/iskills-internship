@@ -45,20 +45,26 @@ export default function Dashboard() {
         if (countErr) throw countErr
         applicants = count || 0
 
-        // Fetch recent applications with internship title and applicant info
+        // Fetch recent applications with internship title
         const { data: apps, error: appsErr } = await supabase
           .from('applications')
-          .select(`
-            id, status, created_at, cover_letter,
-            internships(title),
-            profiles(full_name, email)
-          `)
+          .select('*, internships(title)')
           .in('internship_id', internshipIds)
-          .order('created_at', { ascending: false })
           .limit(8)
 
         if (appsErr) throw appsErr
-        recentApps = apps || []
+
+        let appsList = apps || []
+        const userIds = [...new Set(appsList.map(a => a.user_id).filter(Boolean))]
+        if (userIds.length > 0) {
+          const { data: profilesData } = await supabase
+            .from('profiles')
+            .select('id, full_name, email')
+            .in('id', userIds)
+          const profileMap = (profilesData || []).reduce((acc, p) => ({ ...acc, [p.id]: p }), {})
+          appsList = appsList.map(a => ({ ...a, profiles: profileMap[a.user_id] }))
+        }
+        recentApps = appsList
       }
 
       setStats({ total, pending, active, applicants })

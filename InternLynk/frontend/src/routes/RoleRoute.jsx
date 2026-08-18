@@ -15,7 +15,16 @@ export default function RoleRoute({ allowed }) {
   if (!profile) return <div className="p-6">Loading profile...</div>
 
   // Enforce role access
-  if (!allowed.includes(profile.role)) return <Navigate to="/" replace />
+  if (!allowed.includes(profile.role)) {
+    const roleDashboardMap = {
+      student: '/dashboard/student',
+      guest: '/dashboard/guest',
+      university: '/dashboard/university',
+      software_house: '/dashboard/software-house',
+      admin: '/dashboard/admin',
+    }
+    return <Navigate to={roleDashboardMap[profile.role] || '/'} replace />
+  }
 
   return <Outlet />
 }

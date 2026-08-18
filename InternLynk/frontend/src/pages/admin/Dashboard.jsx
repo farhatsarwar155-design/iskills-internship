@@ -51,10 +51,21 @@ export default function AdminDashboard() {
           supabase.from('internships').select('*', { count: 'exact', head: true }),
           supabase.from('internships').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
           supabase.from('profiles').select('id, full_name, organization_name, email, role, created_at, approval_status').order('created_at', { ascending: false }).limit(5),
-          supabase.from('internships').select('id, title, status, created_at, created_by, profiles:created_by(organization_name, full_name)').order('created_at', { ascending: false }).limit(5),
+          supabase.from('internships').select('id, title, status, created_at, created_by, software_house_id').order('created_at', { ascending: false }).limit(5),
         ])
 
         setStats({ totalUsers, pendingAccounts, totalInternships, pendingInternships })
+
+        // Fetch posters profiles
+        const posterIds = [...new Set((recentInternshipsList || []).map(i => i.created_by || i.software_house_id).filter(Boolean))]
+        let posterMap = {}
+        if (posterIds.length > 0) {
+          const { data: posters } = await supabase
+            .from('profiles')
+            .select('id, organization_name, full_name')
+            .in('id', posterIds)
+          posterMap = (posters || []).reduce((acc, p) => ({ ...acc, [p.id]: p }), {})
+        }
 
         const activities = [
           ...(recentProfiles || []).map(p => ({
@@ -65,14 +76,17 @@ export default function AdminDashboard() {
             status: p.approval_status,
             date: p.created_at,
           })),
-          ...(recentInternshipsList || []).map(i => ({
-            id: `internship-${i.id}`,
-            type: 'internship',
-            label: i.title,
-            sub: `Posted by ${i.profiles?.organization_name || i.profiles?.full_name || 'Unknown'}`,
-            status: i.status,
-            date: i.created_at,
-          })),
+          ...(recentInternshipsList || []).map(i => {
+            const poster = posterMap[i.created_by || i.software_house_id]
+            return {
+              id: `internship-${i.id}`,
+              type: 'internship',
+              label: i.title,
+              sub: `Posted by ${poster?.organization_name || poster?.full_name || 'Unknown'}`,
+              status: i.status,
+              date: i.created_at,
+            }
+          }),
         ].sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 8)
 
         setRecentActivity(activities)

@@ -137,54 +137,22 @@ export function AuthProvider({ children }) {
           password: password.trim() 
         })
         
-        // If direct login succeeds, verify it's a student and proceed
+        // If direct login succeeds, proceed directly
         if (directLoginResult.data?.user && !directLoginResult.error) {
-          console.log('[Auth] Direct login successful, verifying student role...')
-          // Verify the user is actually a student
-          const { data: profileData } = await supabase
-            .from('profiles')
-            .select('role')
-            .eq('id', directLoginResult.data.user.id)
-            .maybeSingle()
-          
-          if (profileData?.role === 'student') {
-            console.log('[Auth] Confirmed student role, using direct login (password may have been changed)')
-            // Use the direct login result and continue with normal flow below
-            // We'll set a flag to skip the student_id verification
-            const { data, error } = directLoginResult
-            
-            if (error) {
-              console.error('[Auth] signIn error after direct login:', error)
-              return { data: null, error }
-            }
+          const signedInUser = directLoginResult.data.user
+          console.log('[Auth] Direct login successful. User:', signedInUser.id)
 
-            const signedInUser = data.user
-            console.log('[Auth] signIn success. User:', signedInUser?.id)
-
-            if (!signedInUser) {
-              return { data: null, error: { message: 'Login failed: user not found.' } }
-            }
-
-            // Fetch profile
-            const { data: profile, error: profileError } = await supabase
-              .from('profiles')
-              .select('*')
-              .eq('id', signedInUser.id)
-              .maybeSingle()
-
-            if (profileError) {
-              console.error('[Auth] Profile fetch error:', profileError)
-            }
-
-            setUser(signedInUser)
-            setProfile(profile || null)
-
-            return { data: { user: signedInUser, profile }, error: null }
-          } else {
-            // Not a student, sign out and continue with student_id verification
-            console.log('[Auth] User is not a student, trying student_id verification...')
-            await supabase.auth.signOut()
+          // Fetch profile
+          let userProfile = await fetchProfile(signedInUser.id)
+          if (!userProfile) {
+            await ensureProfile()
+            userProfile = await fetchProfile(signedInUser.id)
           }
+
+          setUser(signedInUser)
+          setProfile(userProfile || null)
+
+          return { data: { user: signedInUser, profile: userProfile }, error: null }
         }
         
         // If direct login failed or user is not a student, try student_id verification

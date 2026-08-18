@@ -58,7 +58,9 @@ export default function PostInternship() {
         duration: form.duration.trim(),
         stipend: form.stipend !== '' ? Number(form.stipend) : null,
         status: 'pending',
+        software_house_id: user.id,
         created_by: user.id,
+        skills: [],
         created_at: new Date().toISOString(),
       })
 

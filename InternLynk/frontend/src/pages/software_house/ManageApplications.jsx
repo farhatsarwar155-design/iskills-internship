@@ -88,35 +88,29 @@ export default function ManageApplications() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('applications')
-        .select(`
-          id,
-          user_id,
-          internship_id,
-          status,
-          cover_letter,
-          created_at,
-          updated_at,
-          profiles:user_id (
-            id,
-            full_name,
-            email,
-            profile_picture,
-            university_id
-          ),
-          internships:internship_id (
-            id,
-            title,
-            location,
-            duration,
-            stipend,
-            status
-          )
-        `)
+        .select('id, user_id, internship_id, status, cover_letter, created_at, updated_at')
         .in('internship_id', internshipIds)
-        .order('created_at', { ascending: false })
 
       if (error) throw error
-      return data || []
+      let apps = data || []
+      const userIds = [...new Set(apps.map((a) => a.user_id).filter(Boolean))]
+      let profileMap = {}
+      if (userIds.length > 0) {
+        const { data: profilesData } = await supabase
+          .from('profiles')
+          .select('id, full_name, email, profile_picture, university_id')
+          .in('id', userIds)
+        profileMap = (profilesData || []).reduce((acc, p) => ({ ...acc, [p.id]: p }), {})
+      }
+
+      const internshipMap = (internships || []).reduce((acc, i) => ({ ...acc, [i.id]: i }), {})
+
+      apps = apps.map((a) => ({
+        ...a,
+        profiles: profileMap[a.user_id] || {},
+        internships: internshipMap[a.internship_id] || {},
+      }))
+      return apps
     },
   })
 

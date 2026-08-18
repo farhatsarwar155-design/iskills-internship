@@ -34,63 +34,57 @@ export default function AuditLogs() {
     try {
       setLoading(true)
 
-      // Fetch admin_logs with admin profile
-      const { data: adminLogs, error: adminError } = await supabase
-        .from('admin_logs')
-        .select(`
-          id,
-          admin_id,
-          action,
-          target_type,
-          target_id,
-          feedback,
-          metadata,
-          timestamp,
-          profiles:admin_id (
-            email,
-            full_name,
-            role
-          )
-        `)
-        .order('timestamp', { ascending: false })
-        .limit(500)
+      // 1. Fetch admin_logs
+      let adminLogs = []
+      try {
+        const { data, error } = await supabase
+          .from('admin_logs')
+          .select('id, admin_id, action, target_type, target_id, feedback, metadata, timestamp')
+          .order('timestamp', { ascending: false })
+          .limit(500)
+        if (!error && data) adminLogs = data
+      } catch (e) {
+        console.warn('admin_logs fetch warning:', e)
+      }
 
-      let combinedLogs = adminLogs || []
+      // 2. Fetch activity_logs
+      let actLogs = []
+      try {
+        const { data, error } = await supabase
+          .from('activity_logs')
+          .select('id, actor_id, role, action, target_type, target_id, metadata, timestamp')
+          .order('timestamp', { ascending: false })
+          .limit(200)
+        if (!error && data) actLogs = data
+      } catch (e) {
+        console.warn('activity_logs fetch warning:', e)
+      }
 
-      // If admin_logs is empty or to complement, also fetch activity_logs
-      const { data: actLogs, error: actError } = await supabase
-        .from('activity_logs')
-        .select(`
-          id,
-          actor_id,
-          role,
-          action,
-          target_type,
-          target_id,
-          metadata,
-          timestamp,
-          profiles:actor_id (
-            email,
-            full_name,
-            role
-          )
-        `)
-        .order('timestamp', { ascending: false })
-        .limit(200)
+      const formattedAct = actLogs.map((a) => ({
+        ...a,
+        admin_id: a.actor_id,
+        feedback: null,
+      }))
 
-      if (actLogs && actLogs.length > 0) {
-        const formattedAct = actLogs.map((a) => ({
-          ...a,
-          admin_id: a.actor_id,
-          feedback: null,
+      const logMap = new Map()
+      adminLogs.forEach((l) => logMap.set(l.id, l))
+      formattedAct.forEach((l) => {
+        if (!logMap.has(l.id)) logMap.set(l.id, l)
+      })
+      let combinedLogs = Array.from(logMap.values())
+
+      // 3. Enrich with profile information
+      const userIds = [...new Set(combinedLogs.map((l) => l.admin_id || l.actor_id).filter(Boolean))]
+      if (userIds.length > 0) {
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('id, email, full_name, role')
+          .in('id', userIds)
+        const profileMap = (profiles || []).reduce((acc, p) => ({ ...acc, [p.id]: p }), {})
+        combinedLogs = combinedLogs.map((l) => ({
+          ...l,
+          profiles: profileMap[l.admin_id || l.actor_id] || { email: 'admin@internlynk.com', full_name: 'Administrator', role: 'admin' },
         }))
-        // Merge and sort by timestamp
-        const logMap = new Map()
-        combinedLogs.forEach((l) => logMap.set(l.id, l))
-        formattedAct.forEach((l) => {
-          if (!logMap.has(l.id)) logMap.set(l.id, l)
-        })
-        combinedLogs = Array.from(logMap.values())
       }
 
       combinedLogs.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))

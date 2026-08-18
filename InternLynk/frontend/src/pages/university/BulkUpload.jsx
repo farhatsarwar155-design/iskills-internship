@@ -171,7 +171,7 @@ export default function BulkUpload() {
 
         const validCount = validRows.filter((r) => r.isValid).length
         if (errors.length > 0) {
-          toast.warn(`Parsed ${validRows.length} rows (${validCount} valid, ${errors.length} with issues)`)
+          toast(`Parsed ${validRows.length} rows (${validCount} valid, ${errors.length} with issues)`, { icon: '⚠️' })
         } else {
           toast.success(`Successfully parsed all ${validRows.length} student records!`)
         }
@@ -358,7 +358,7 @@ export default function BulkUpload() {
         toast.success(`Successfully uploaded and created accounts for ${results.successful} student(s)!`)
       }
       if (results.failed > 0) {
-        toast.warn(`${results.failed} student record(s) could not be processed.`)
+        toast(`${results.failed} student record(s) could not be processed.`, { icon: '⚠️' })
       }
 
       // Refresh queries

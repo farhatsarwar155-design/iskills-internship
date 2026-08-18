@@ -88,30 +88,31 @@ export default function Analytics() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('applications')
-        .select(`
-          id,
-          user_id,
-          internship_id,
-          status,
-          created_at,
-          profiles:user_id (
-            full_name,
-            email
-          ),
-          internships:internship_id (
-            id,
-            title,
-            status,
-            location,
-            duration,
-            stipend
-          )
-        `)
+        .select('id, user_id, internship_id, status, created_at, cover_letter')
         .in('internship_id', internshipIds)
-        .order('created_at', { ascending: true })
 
       if (error) throw error
-      return data || []
+
+      let apps = data || []
+      const userIds = [...new Set(apps.map(a => a.user_id).filter(Boolean))]
+      let profileMap = {}
+      if (userIds.length > 0) {
+        const { data: profilesData } = await supabase
+          .from('profiles')
+          .select('id, full_name, email')
+          .in('id', userIds)
+        profileMap = (profilesData || []).reduce((acc, p) => ({ ...acc, [p.id]: p }), {})
+      }
+
+      const internshipMap = (internships || []).reduce((acc, i) => ({ ...acc, [i.id]: i }), {})
+
+      apps = apps.map(a => ({
+        ...a,
+        profiles: profileMap[a.user_id] || {},
+        internships: internshipMap[a.internship_id] || {},
+      }))
+
+      return apps
     },
   })
 

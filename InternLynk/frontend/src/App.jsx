@@ -51,21 +51,21 @@ function Layout({ children }) {
   const isGuest = profile?.role === 'guest'
   const hasHeader = isAdmin || (!isSoftwareHouse && !isStudent && !isGuest)
   return (
-    <div className="min-h-screen flex">
-      {/* Left: Sidebar, pinned to the very top */}
-      <div className="w-64 shrink-0 sticky top-0 h-screen">
+    <div className="h-screen w-screen flex bg-gray-50/60 overflow-hidden">
+      {/* Left: Sidebar, fixed height with internal scrolling */}
+      <div className="w-64 shrink-0 h-full">
         {isSoftwareHouse ? <SoftwareHouseSidebar /> : (isStudent || isGuest) ? <StudentSidebar /> : <Sidebar />}
       </div>
 
-      {/* Right: Column with sticky header at top and scrollable content below */}
-      <div className="flex-1 flex flex-col">
+      {/* Right: Scrollable view area */}
+      <div className="flex-1 flex flex-col min-w-0 h-full overflow-y-auto">
         {hasHeader && (
-          <div className="sticky top-0 z-30">
+          <div className="sticky top-0 z-30 shrink-0">
             {isAdmin ? <AdminHeader /> : <Header />}
           </div>
         )}
-        <main className="flex-1 overflow-y-auto">
-          <div className="max-w-7xl mx-auto p-6">{children}</div>
+        <main className="flex-1 p-6 md:p-8">
+          <div className="max-w-7xl mx-auto">{children}</div>
         </main>
       </div>
     </div>

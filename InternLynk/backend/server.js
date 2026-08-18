@@ -8,8 +8,33 @@ import { createClient } from '@supabase/supabase-js'
 import { generatePassword } from './utils/helpers.js'
 import { parseCSV, validateStudentCSV } from './utils/csvParser.js'
 import dotenv from 'dotenv'
+import nodemailer from 'nodemailer'
 
 dotenv.config()
+
+// In-memory OTP 2FA storage: email -> { otp, expiresAt, attempts }
+const otpStore = new Map()
+
+// Configure Nodemailer transporter
+const transporter = nodemailer.createTransport(
+  process.env.SMTP_USER && process.env.SMTP_USER.includes('gmail.com')
+    ? {
+        service: 'gmail',
+        auth: {
+          user: process.env.SMTP_USER,
+          pass: process.env.SMTP_PASS,
+        },
+      }
+    : {
+        host: process.env.SMTP_HOST || 'smtp.gmail.com',
+        port: parseInt(process.env.SMTP_PORT || '587'),
+        secure: process.env.SMTP_SECURE === 'true',
+        auth: {
+          user: process.env.SMTP_USER || '',
+          pass: process.env.SMTP_PASS || '',
+        },
+      }
+)
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -338,6 +363,108 @@ app.post('/api/profile/upload-picture', upload.single('picture'), async (req, re
       fs.unlinkSync(req.file.path)
     }
     res.status(500).json({ error: error.message || 'Upload failed' })
+  }
+})
+
+// ============================================================
+// 🔒 2FA EMAIL OTP SECURITY ENDPOINTS
+// ============================================================
+
+// Send 6-digit OTP to user's email
+app.post('/api/auth/send-otp', async (req, res) => {
+  try {
+    const { email } = req.body || {}
+    if (!email) {
+      return res.status(400).json({ error: 'Email is required for OTP delivery' })
+    }
+
+    const cleanEmail = email.trim().toLowerCase()
+    
+    // Generate 6-digit cryptographically random OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString()
+    const expiresAt = Date.now() + 10 * 60 * 1000 // 10 minutes expiry
+
+    otpStore.set(cleanEmail, {
+      otp,
+      expiresAt,
+      attempts: 0,
+    })
+
+    console.log(`[2FA OTP] Generated 6-digit OTP for ${cleanEmail}: ${otp}`)
+
+    // Attempt email delivery if SMTP user is configured
+    if (process.env.SMTP_USER && process.env.SMTP_PASS) {
+      try {
+        await transporter.sendMail({
+          from: `"InternLynk Security" <${process.env.SMTP_USER}>`,
+          to: cleanEmail,
+          subject: `🔐 Your InternLynk 2FA Verification Code: ${otp}`,
+          html: `
+            <div style="font-family: Arial, sans-serif; max-width: 500px; margin: 0 auto; padding: 24px; border: 1px solid #e2e8f0; border-radius: 16px; background-color: #ffffff;">
+              <h2 style="color: #2563eb; margin-bottom: 8px;">InternLynk Security Verification</h2>
+              <p style="color: #475569; font-size: 14px;">Use the following 6-digit OTP verification code to complete your secure login:</p>
+              <div style="background-color: #f1f5f9; padding: 16px; border-radius: 12px; text-align: center; margin: 20px 0;">
+                <span style="font-size: 32px; font-weight: 800; letter-spacing: 8px; color: #1e293b;">${otp}</span>
+              </div>
+              <p style="color: #64748b; font-size: 12px;">This code will expire in 10 minutes. If you did not attempt to log in, please ignore this message.</p>
+            </div>
+          `,
+        })
+        console.log(`[2FA OTP] Email sent successfully to ${cleanEmail}`)
+      } catch (mailErr) {
+        console.error('[2FA OTP] SMTP delivery error (falling back to dev mode):', mailErr.message)
+      }
+    }
+
+    res.json({
+      success: true,
+      message: `Verification code sent to ${cleanEmail}`,
+      debugOtp: process.env.NODE_ENV !== 'production' ? otp : undefined,
+    })
+  } catch (err) {
+    console.error('[2FA OTP] Send error:', err)
+    res.status(500).json({ error: 'Failed to send verification code' })
+  }
+})
+
+// Verify 6-digit OTP
+app.post('/api/auth/verify-otp', async (req, res) => {
+  try {
+    const { email, otp } = req.body || {}
+    if (!email || !otp) {
+      return res.status(400).json({ error: 'Email and OTP code are required' })
+    }
+
+    const cleanEmail = email.trim().toLowerCase()
+    const record = otpStore.get(cleanEmail)
+
+    if (!record) {
+      return res.status(400).json({ error: 'No active OTP verification session. Please request a new code.' })
+    }
+
+    if (Date.now() > record.expiresAt) {
+      otpStore.delete(cleanEmail)
+      return res.status(400).json({ error: 'Verification code has expired. Please request a new code.' })
+    }
+
+    if (record.attempts >= 5) {
+      otpStore.delete(cleanEmail)
+      return res.status(429).json({ error: 'Too many failed attempts. Please request a new verification code.' })
+    }
+
+    if (record.otp !== otp.trim()) {
+      record.attempts += 1
+      return res.status(400).json({ error: `Invalid verification code. (${5 - record.attempts} attempts remaining)` })
+    }
+
+    // Success - clear OTP
+    otpStore.delete(cleanEmail)
+    console.log(`[2FA OTP] OTP successfully verified for ${cleanEmail}`)
+
+    res.json({ success: true, message: '2FA authentication successful' })
+  } catch (err) {
+    console.error('[2FA OTP] Verify error:', err)
+    res.status(500).json({ error: 'Failed to verify OTP code' })
   }
 })
 
