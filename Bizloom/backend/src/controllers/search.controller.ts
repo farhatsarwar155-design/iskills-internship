@@ -15,13 +15,13 @@ export const globalSearch = async (req: Request, res: Response) => {
       });
     }
 
-    // Parallel queries to Prisma database
+    // Parallel queries to Prisma database (SQLite — no mode: 'insensitive')
     const [products, customers, orders, suppliers, employees] = await Promise.all([
       prisma.product.findMany({
         where: {
           OR: [
-            { name: { contains: q, mode: 'insensitive' } },
-            { sku: { contains: q, mode: 'insensitive' } }
+            { name: { contains: q } },
+            { sku: { contains: q } }
           ]
         },
         take: 5,
@@ -30,9 +30,9 @@ export const globalSearch = async (req: Request, res: Response) => {
       prisma.customer.findMany({
         where: {
           OR: [
-            { name: { contains: q, mode: 'insensitive' } },
-            { email: { contains: q, mode: 'insensitive' } },
-            { company: { contains: q, mode: 'insensitive' } }
+            { name: { contains: q } },
+            { email: { contains: q } },
+            { company: { contains: q } }
           ]
         },
         take: 5,
@@ -41,7 +41,7 @@ export const globalSearch = async (req: Request, res: Response) => {
       prisma.order.findMany({
         where: {
           OR: [
-            { orderNumber: { contains: q, mode: 'insensitive' } }
+            { orderNumber: { contains: q } }
           ]
         },
         take: 5,
@@ -50,9 +50,9 @@ export const globalSearch = async (req: Request, res: Response) => {
       prisma.supplier.findMany({
         where: {
           OR: [
-            { name: { contains: q, mode: 'insensitive' } },
-            { email: { contains: q, mode: 'insensitive' } },
-            { company: { contains: q, mode: 'insensitive' } }
+            { name: { contains: q } },
+            { email: { contains: q } },
+            { company: { contains: q } }
           ]
         },
         take: 5,
@@ -61,9 +61,9 @@ export const globalSearch = async (req: Request, res: Response) => {
       prisma.employee.findMany({
         where: {
           OR: [
-            { name: { contains: q, mode: 'insensitive' } },
-            { email: { contains: q, mode: 'insensitive' } },
-            { position: { contains: q, mode: 'insensitive' } }
+            { name: { contains: q } },
+            { email: { contains: q } },
+            { position: { contains: q } }
           ]
         },
         take: 5,

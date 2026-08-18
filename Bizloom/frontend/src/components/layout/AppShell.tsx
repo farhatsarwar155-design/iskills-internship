@@ -995,19 +995,19 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           {/* Results Area */}
           <div className="max-h-[380px] overflow-y-auto p-2 space-y-3">
             
-            {/* Quick Actions — always visible */}
+            {/* Quick Actions — filtered by current user role */}
             <div className="space-y-0.5">
               <div className="px-3 text-[9px] font-black text-neutral-400 uppercase tracking-widest mb-1">Quick Actions</div>
               {[
-                { label: 'Add Product', icon: Package, actionName: 'add-product', color: 'text-indigo-500' },
-                { label: 'New Sale', icon: ShoppingCart, actionName: 'new-sale', color: 'text-emerald-500' },
-                { label: 'Add Employee', icon: UserCheck, actionName: 'add-employee', color: 'text-sky-500' },
-                { label: 'View Reports', icon: BarChart3, url: '/dashboard/analytics', color: 'text-violet-500' },
-              ].map((item, idx) => (
+                { label: 'New Sale', icon: ShoppingCart, actionName: 'new-sale', url: '/dashboard/sales?action=new', color: 'text-emerald-500', roles: ['ADMIN', 'MANAGER', 'EMPLOYEE', 'ACCOUNTANT'] },
+                { label: 'New Product', icon: Package, actionName: 'add-product', url: '/dashboard/inventory?action=new', color: 'text-indigo-500', roles: ['ADMIN', 'MANAGER'] },
+                { label: 'New Employee', icon: UserCheck, actionName: 'add-employee', url: '/dashboard/hr?action=new', color: 'text-sky-500', roles: ['ADMIN', 'MANAGER'] },
+                { label: 'View Reports', icon: BarChart3, url: '/dashboard/analytics', color: 'text-violet-500', roles: ['ADMIN', 'ACCOUNTANT'] },
+              ].filter(action => user?.role && action.roles.includes(user.role)).map((item, idx) => (
                 <button
                   key={item.label}
                   onClick={() => handleItemSelect(item)}
-                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold transition-colors text-left ${
+                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold transition-colors text-left cursor-pointer ${
                     selectedIndex === idx && !globalQuery
                       ? 'bg-indigo-50 dark:bg-indigo-950/30 text-indigo-700 dark:text-indigo-300'
                       : 'hover:bg-slate-50 dark:hover:bg-neutral-800/40 text-neutral-700 dark:text-neutral-300'
@@ -1039,8 +1039,11 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                 {/* Products */}
                 {globalResults.products?.length > 0 && (
                   <div className="space-y-0.5">
-                    <div className="px-3 text-[9px] font-black text-neutral-400 uppercase tracking-widest">Products</div>
-                    {globalResults.products.map((p: any, i: number) => (
+                    <div className="px-3 text-[9px] font-black text-neutral-400 uppercase tracking-widest flex items-center justify-between">
+                      <span>Products</span>
+                      <span className="bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 px-1.5 py-0.2 rounded-full">{globalResults.products.length}</span>
+                    </div>
+                    {globalResults.products.map((p: any) => (
                       <Link
                         key={p.id}
                         href={`/dashboard/inventory?search=${p.sku}`}
@@ -1060,7 +1063,10 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                 {/* Customers */}
                 {globalResults.customers?.length > 0 && (
                   <div className="space-y-0.5">
-                    <div className="px-3 text-[9px] font-black text-neutral-400 uppercase tracking-widest">Customers</div>
+                    <div className="px-3 text-[9px] font-black text-neutral-400 uppercase tracking-widest flex items-center justify-between">
+                      <span>Customers</span>
+                      <span className="bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 px-1.5 py-0.2 rounded-full">{globalResults.customers.length}</span>
+                    </div>
                     {globalResults.customers.map((c: any) => (
                       <Link
                         key={c.id}
@@ -1081,7 +1087,10 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                 {/* Orders */}
                 {globalResults.orders?.length > 0 && (
                   <div className="space-y-0.5">
-                    <div className="px-3 text-[9px] font-black text-neutral-400 uppercase tracking-widest">Sales Invoices</div>
+                    <div className="px-3 text-[9px] font-black text-neutral-400 uppercase tracking-widest flex items-center justify-between">
+                      <span>Sales Invoices</span>
+                      <span className="bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400 px-1.5 py-0.2 rounded-full">{globalResults.orders.length}</span>
+                    </div>
                     {globalResults.orders.map((o: any) => (
                       <Link
                         key={o.id}
@@ -1105,7 +1114,10 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                 {/* Suppliers */}
                 {globalResults.suppliers?.length > 0 && (
                   <div className="space-y-0.5">
-                    <div className="px-3 text-[9px] font-black text-neutral-400 uppercase tracking-widest">Suppliers</div>
+                    <div className="px-3 text-[9px] font-black text-neutral-400 uppercase tracking-widest flex items-center justify-between">
+                      <span>Suppliers</span>
+                      <span className="bg-sky-50 dark:bg-sky-950/50 text-sky-600 dark:text-sky-400 px-1.5 py-0.2 rounded-full">{globalResults.suppliers.length}</span>
+                    </div>
                     {globalResults.suppliers.map((s: any) => (
                       <Link
                         key={s.id}
@@ -1126,7 +1138,10 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                 {/* Employees */}
                 {globalResults.employees?.length > 0 && (
                   <div className="space-y-0.5">
-                    <div className="px-3 text-[9px] font-black text-neutral-400 uppercase tracking-widest">Employees</div>
+                    <div className="px-3 text-[9px] font-black text-neutral-400 uppercase tracking-widest flex items-center justify-between">
+                      <span>Employees</span>
+                      <span className="bg-violet-50 dark:bg-violet-950/50 text-violet-600 dark:text-violet-400 px-1.5 py-0.2 rounded-full">{globalResults.employees.length}</span>
+                    </div>
                     {globalResults.employees.map((e: any) => (
                       <Link
                         key={e.id}

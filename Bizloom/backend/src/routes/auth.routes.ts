@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { register, verifyOTP, resendOTP, login, refresh, logout, me, getUsers, adminCreateUser, updateUserRole, deleteUser } from '../controllers/auth.controller';
+import { register, verifyOTP, resendOTP, login, forgotPassword, resetPassword, refresh, logout, me, getUsers, adminCreateUser, updateUserRole, deleteUser } from '../controllers/auth.controller';
 import { authenticateJWT, requireRoles } from '../middleware/auth';
 
 const router = Router();
@@ -8,6 +8,8 @@ router.post('/register', register);
 router.post('/verify-otp', verifyOTP);
 router.post('/resend-otp', resendOTP);
 router.post('/login', login);
+router.post('/forgot-password', forgotPassword);
+router.post('/reset-password', resetPassword);
 router.post('/refresh', refresh);
 router.post('/logout', logout);
 router.get('/me', authenticateJWT, me);

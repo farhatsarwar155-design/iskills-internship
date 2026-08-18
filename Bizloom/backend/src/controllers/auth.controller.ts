@@ -495,3 +495,109 @@ export const deleteUser = async (req: AuthenticatedRequest, res: Response) => {
     return res.status(500).json({ message: 'Failed to delete user account' });
   }
 };
+
+export const forgotPassword = async (req: Request, res: Response) => {
+  const { email } = req.body;
+
+  if (!email) {
+    return res.status(400).json({ message: 'Email address is required' });
+  }
+
+  try {
+    const user = await prisma.user.findUnique({ where: { email: email.trim().toLowerCase() } });
+    if (!user) {
+      return res.status(404).json({ message: 'User account with this email address does not exist' });
+    }
+
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000);
+
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { otp, otpExpiresAt },
+    });
+
+    await sendOTPEmail({ to: user.email, name: user.name, otp });
+
+    await logAction({
+      userId: user.id,
+      userEmail: user.email,
+      action: 'FORGOT_PASSWORD_REQUEST',
+      module: 'AUTH',
+      description: `Requested password reset OTP for ${user.email}`,
+      ipAddress: req.ip,
+      severity: 'INFO',
+    });
+
+    return res.json({
+      message: 'Password reset OTP verification code has been sent to your email.',
+      mockOtp: otp,
+    });
+  } catch (error) {
+    console.error('Forgot password error:', error);
+    return res.status(500).json({ message: 'Failed to request password reset' });
+  }
+};
+
+export const resetPassword = async (req: Request, res: Response) => {
+  const { email, otp, newPassword } = req.body;
+
+  if (!email || !otp || !newPassword) {
+    return res.status(400).json({ message: 'Email, OTP code, and new password are required' });
+  }
+
+  if (newPassword.length < 8) {
+    return res.status(400).json({ message: 'Password must be at least 8 characters long' });
+  }
+
+  try {
+    const user = await prisma.user.findUnique({ where: { email: email.trim().toLowerCase() } });
+    if (!user) {
+      return res.status(404).json({ message: 'User account not found' });
+    }
+
+    if (!user.otp) {
+      return res.status(400).json({ message: 'No active password reset request found. Please request a new code.' });
+    }
+
+    if (user.otpExpiresAt && new Date() > new Date(user.otpExpiresAt)) {
+      return res.status(400).json({
+        message: 'This code has expired, please request a new one',
+        code: 'OTP_EXPIRED',
+      });
+    }
+
+    if (user.otp !== otp.trim()) {
+      return res.status(400).json({ message: 'Invalid OTP, please try again' });
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        password: hashedPassword,
+        isVerified: true,
+        otp: null,
+        otpExpiresAt: null,
+      },
+    });
+
+    await logAction({
+      userId: user.id,
+      userEmail: user.email,
+      action: 'RESET_PASSWORD',
+      module: 'AUTH',
+      description: `Password reset successfully for user ${user.email}`,
+      ipAddress: req.ip,
+      severity: 'WARNING',
+    });
+
+    console.log(`✅ [Password Reset] Password updated successfully for ${email}`);
+
+    return res.json({ message: 'Password reset successful! Please log in.' });
+  } catch (error) {
+    console.error('Reset password error:', error);
+    return res.status(500).json({ message: 'Failed to reset password' });
+  }
+};

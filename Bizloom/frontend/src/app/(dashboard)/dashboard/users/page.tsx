@@ -250,10 +250,13 @@ export default function UserManagementPage() {
                   <table className="w-full text-left text-xs">
                     <thead className="bg-slate-50 dark:bg-neutral-950/50 text-[10px] uppercase tracking-wider text-neutral-400 font-black border-b border-neutral-100 dark:border-neutral-800">
                       <tr>
-                        <th className="p-3.5">User</th>
+                        <th className="p-3.5">Name</th>
+                        <th className="p-3.5">Email</th>
                         <th className="p-3.5">Role</th>
                         <th className="p-3.5">Status</th>
-                        <th className="p-3.5 text-right">Details</th>
+                        <th className="p-3.5">Last Login</th>
+                        <th className="p-3.5">Date Joined</th>
+                        <th className="p-3.5 text-right">Actions</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800">
@@ -270,39 +273,86 @@ export default function UserManagementPage() {
                                 : 'hover:bg-slate-50/70 dark:hover:bg-neutral-800/50'
                             }`}
                           >
-                            <td className="p-3.5">
-                              <div className="flex items-center gap-3">
-                                <div className={`h-8 w-8 rounded-full flex items-center justify-center text-xs font-black shrink-0 ${meta.bg} ${meta.color}`}>
+                            <td className="p-3.5 font-bold text-neutral-800 dark:text-neutral-200">
+                              <div className="flex items-center gap-2.5">
+                                <div className={`h-7 w-7 rounded-full flex items-center justify-center text-[10px] font-black shrink-0 ${meta.bg} ${meta.color}`}>
                                   {getInitials(u.name)}
                                 </div>
-                                <div className="min-w-0">
-                                  <div className="font-bold text-neutral-800 dark:text-neutral-200 flex items-center gap-1.5 truncate">
-                                    {u.name}
-                                    {u.id === currentUser?.id && (
-                                      <span className="text-[9px] font-black text-indigo-500 bg-indigo-50 dark:bg-indigo-950/40 px-1.5 rounded-full border border-indigo-200 dark:border-indigo-900/40">YOU</span>
-                                    )}
-                                  </div>
-                                  <div className="text-[11px] text-neutral-400 font-medium truncate">{u.email}</div>
-                                </div>
+                                <span className="truncate">{u.name}</span>
+                                {u.id === currentUser?.id && (
+                                  <span className="text-[9px] font-black text-indigo-500 bg-indigo-50 dark:bg-indigo-950/40 px-1.5 rounded-full border border-indigo-200 dark:border-indigo-900/40">YOU</span>
+                                )}
                               </div>
                             </td>
-                            <td className="p-3.5">
-                              <span className={`inline-block text-[10px] font-black px-2 py-0.5 rounded-full border ${meta.bg} ${meta.color} ${meta.border}`}>
-                                {u.role}
-                              </span>
+                            <td className="p-3.5 text-neutral-600 dark:text-neutral-400 font-medium">
+                              {u.email}
                             </td>
-                            <td className="p-3.5">
-                              <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black border ${
-                                u.isVerified
-                                  ? 'bg-emerald-50 text-emerald-600 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-400'
-                                  : 'bg-rose-50 text-rose-600 border-rose-200 dark:bg-rose-950/40 dark:text-rose-400'
-                              }`}>
-                                {u.isVerified ? <CheckCircle2 className="h-3 w-3" /> : <XCircle className="h-3 w-3" />}
-                                {u.isVerified ? 'Active' : 'Inactive'}
-                              </span>
+                            <td className="p-3.5" onClick={e => e.stopPropagation()}>
+                              <select
+                                value={u.role}
+                                disabled={u.id === currentUser?.id}
+                                onChange={async (e) => {
+                                  const newR = e.target.value as UserRecord['role'];
+                                  try {
+                                    await api.patch(`/auth/users/${u.id}`, { role: newR });
+                                    toast.success(`Role updated to ${newR}`);
+                                    fetchUsers();
+                                  } catch (err: any) {
+                                    toast.error(err.response?.data?.message || 'Failed to update role');
+                                  }
+                                }}
+                                className={`text-[10px] font-black px-2 py-1 rounded-lg border ${meta.bg} ${meta.color} ${meta.border} disabled:opacity-50 cursor-pointer outline-none`}
+                              >
+                                <option value="ADMIN">ADMIN</option>
+                                <option value="MANAGER">MANAGER</option>
+                                <option value="EMPLOYEE">EMPLOYEE</option>
+                                <option value="ACCOUNTANT">ACCOUNTANT</option>
+                              </select>
                             </td>
-                            <td className="p-3.5 text-right">
-                              <ChevronRight className={`h-4 w-4 inline-block transition-transform ${isSelected ? 'translate-x-1 text-indigo-600 dark:text-indigo-400' : 'text-neutral-300'}`} />
+                            <td className="p-3.5" onClick={e => e.stopPropagation()}>
+                              <button
+                                onClick={() => handleToggleStatus(u)}
+                                disabled={u.id === currentUser?.id}
+                                className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-black border transition-colors cursor-pointer disabled:opacity-50 ${
+                                  u.isVerified
+                                    ? 'bg-emerald-50 text-emerald-600 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-400 hover:bg-emerald-100'
+                                    : 'bg-amber-50 text-amber-600 border-amber-200 dark:bg-amber-950/40 dark:text-amber-400 hover:bg-amber-100'
+                                }`}
+                              >
+                                {u.isVerified ? <CheckCircle2 className="h-3 w-3" /> : <Clock className="h-3 w-3" />}
+                                {u.isVerified ? 'Active' : 'Pending Verification'}
+                              </button>
+                            </td>
+                            <td className="p-3.5 text-neutral-500 dark:text-neutral-400 font-medium">
+                              {fmtDateTime(u.lastLogin)}
+                            </td>
+                            <td className="p-3.5 text-neutral-500 dark:text-neutral-400 font-medium">
+                              {fmtDate(u.createdAt)}
+                            </td>
+                            <td className="p-3.5 text-right" onClick={e => e.stopPropagation()}>
+                              <div className="flex items-center justify-end gap-1">
+                                {u.id !== currentUser?.id && (
+                                  <button
+                                    onClick={() => {
+                                      setSelectedUser(u);
+                                      if (confirm(`Permanently delete account for ${u.email}?`)) {
+                                        api.delete(`/auth/users/${u.id}`).then(() => {
+                                          toast.success('User account deleted');
+                                          setSelectedUser(null);
+                                          fetchUsers();
+                                        }).catch(err => {
+                                          toast.error(err.response?.data?.message || 'Failed to delete user');
+                                        });
+                                      }
+                                    }}
+                                    className="p-1.5 rounded-lg text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors"
+                                    title="Delete User"
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </button>
+                                )}
+                                <ChevronRight className={`h-4 w-4 transition-transform ${isSelected ? 'translate-x-1 text-indigo-600 dark:text-indigo-400' : 'text-neutral-300'}`} />
+                              </div>
                             </td>
                           </tr>
                         );

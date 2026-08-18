@@ -21,6 +21,8 @@ interface AuthContextType {
   register: (email: string, password: string, name: string) => Promise<any>;
   verifyOTP: (email: string, otp: string) => Promise<any>;
   resendOTP: (email: string) => Promise<any>;
+  forgotPassword: (email: string) => Promise<any>;
+  resetPassword: (email: string, otp: string, newPassword: string) => Promise<any>;
   logout: () => Promise<void>;
 }
 
@@ -82,7 +84,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const handleExpired = () => {
       handleLogoutState();
-      if (!['/', '/login', '/register', '/verify-email'].includes(pathname)) {
+      if (!['/', '/login', '/register', '/verify-email', '/forgot-password', '/reset-password'].includes(pathname)) {
         router.push('/login');
       }
     };
@@ -159,6 +161,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const forgotPassword = async (email: string) => {
+    try {
+      const response = await api.post('/auth/forgot-password', { email });
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.message || 'Failed to request password reset');
+    }
+  };
+
+  const resetPassword = async (email: string, otp: string, newPassword: string) => {
+    setIsLoading(true);
+    try {
+      const response = await api.post('/auth/reset-password', { email, otp, newPassword });
+      return response.data;
+    } catch (error: any) {
+      const errRes = error.response?.data;
+      const err = new Error(errRes?.message || 'Failed to reset password') as any;
+      err.code = errRes?.code;
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const logout = async () => {
     setIsLoading(true);
     try {
@@ -184,6 +210,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         register,
         verifyOTP,
         resendOTP,
+        forgotPassword,
+        resetPassword,
         logout,
       }}
     >

@@ -183,9 +183,9 @@ function LoginFormContent() {
                   </div>
 
                   <div className="text-sm">
-                    <span className="font-semibold text-neutral-400 cursor-not-allowed">
+                    <Link href="/forgot-password" className="font-semibold text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 cursor-pointer transition-colors">
                       Forgot password?
-                    </span>
+                    </Link>
                   </div>
                 </div>
 
