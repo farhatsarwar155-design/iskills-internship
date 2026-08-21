@@ -364,15 +364,99 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  /* ---------- Easter egg: secret bonus page (press "C") ---------- */
+  /* ---------- Easter egg: Developer Terminal (press "C") ---------- */
   const secretPage = document.getElementById('secretPage');
   const closeSecret = document.getElementById('closeSecret');
+  const terminalForm = document.getElementById('terminalForm');
+  const terminalInput = document.getElementById('terminalInput');
+  const terminalOutput = document.getElementById('terminalOutput');
+
+  function addTermLine(html, className = '') {
+    if (!terminalOutput) return;
+    const p = document.createElement('p');
+    p.className = `term-line ${className}`.trim();
+    p.innerHTML = html;
+    terminalOutput.appendChild(p);
+    terminalOutput.scrollTop = terminalOutput.scrollHeight;
+  }
+
+  function handleTerminalCommand(rawCmd) {
+    const cmd = rawCmd.trim().toLowerCase();
+    addTermLine(`farhat@comic:~$ ${rawCmd}`, 'term-user');
+    playComicBlip(720, 0.05, 'square');
+
+    switch (cmd) {
+      case 'help':
+        addTermLine('Available commands: <span class="term-highlight">skills</span>, <span class="term-highlight">projects</span>, <span class="term-highlight">stats</span>, <span class="term-highlight">about</span>, <span class="term-highlight">internship</span>, <span class="term-highlight">contact</span>, <span class="term-highlight">hire</span>, <span class="term-highlight">clear</span>');
+        break;
+      case 'skills':
+        addTermLine('⚡ Core Superpowers:');
+        addTermLine('• Flutter &amp; Dart: 20+ apps, Maps, Firebase, Razorpay');
+        addTermLine('• Full Stack: Next.js 16, React, TypeScript, Node.js, Prisma, Supabase');
+        addTermLine('• AI Integrations: Gemini 1.5 Flash API');
+        break;
+      case 'projects':
+        addTermLine('🚀 Top Engineered Systems:');
+        addTermLine('1. <span class="term-highlight">Smart POS</span> (Flutter · Inventory &amp; Sales)');
+        addTermLine('2. <span class="term-highlight">NestIQ</span> (Flutter · Real Estate)');
+        addTermLine('3. <span class="term-highlight">InternLynk</span> (Full Stack · Supabase &amp; React)');
+        addTermLine('4. <span class="term-highlight">Bizloom ERP</span> (Full Stack · Next.js 16 &amp; Prisma)');
+        addTermLine('5. <span class="term-highlight">Huddlr App</span> (Full Stack · Realtime Chat)');
+        break;
+      case 'stats':
+        addTermLine('📊 Hero Power Grid:');
+        addTermLine('• Flutter &amp; Dart: 95% | Full Stack: 92% | Databases: 88% | AI APIs: 86%');
+        break;
+      case 'about':
+        addTermLine('👨‍💻 Farhat: BS Computer Science @ COMSATS University Islamabad (Vehari Campus)');
+        addTermLine('Passionate about mobile architectures, AI integration, and production systems.');
+        break;
+      case 'internship':
+        addTermLine('🎓 Full Stack Internship @ iSkills (Software House, Multan, Pakistan)');
+        addTermLine('Engineered InternLynk, Bizloom ERP, and Huddlr App.');
+        break;
+      case 'contact':
+      case 'hire':
+        addTermLine('✉️ Email: <a href="mailto:farhatsarwar.155@gmail.com" style="color:#96BFE5;">farhatsarwar.155@gmail.com</a>', 'term-success');
+        addTermLine('📞 Phone: <a href="tel:+923262737155" style="color:#96BFE5;">+92-326-2737155</a>', 'term-success');
+        addTermLine('💼 LinkedIn: <a href="https://www.linkedin.com/in/farhat-muhammad-sarwar-391a96411/" target="_blank" style="color:#96BFE5;">View Profile</a>', 'term-success');
+        break;
+      case 'clear':
+        terminalOutput.innerHTML = '';
+        addTermLine('✦ Console cleared. Type <span class="term-highlight">help</span> for commands.');
+        break;
+      case '':
+        break;
+      default:
+        addTermLine(`Command not recognized: "${rawCmd}". Type <span class="term-highlight">help</span> for command list.`);
+        break;
+    }
+  }
+
+  if (terminalForm && terminalInput) {
+    terminalForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const val = terminalInput.value;
+      if (val.trim()) {
+        handleTerminalCommand(val);
+        terminalInput.value = '';
+      }
+    });
+  }
+
+  document.querySelectorAll('.term-tag').forEach(tag => {
+    tag.addEventListener('click', () => {
+      const cmd = tag.getAttribute('data-cmd');
+      if (cmd) handleTerminalCommand(cmd);
+    });
+  });
 
   document.addEventListener('keydown', (e) => {
     if (e.key && e.key.toLowerCase() === 'c' && secretPage && !secretPage.classList.contains('open')) {
       secretPage.classList.add('open');
       secretPage.setAttribute('aria-hidden', 'false');
       playComicBlip(880, 0.12, 'square');
+      if (terminalInput) setTimeout(() => terminalInput.focus(), 150);
     }
     if (e.key === 'Escape') {
       if (secretPage && secretPage.classList.contains('open')) {
@@ -396,4 +480,20 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  /* ---------- Power Grid Animation Observer ---------- */
+  const powerGridPanel = document.querySelector('.about-panel-stats');
+  if (powerGridPanel) {
+    const powerObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          powerGridPanel.classList.add('in-view');
+          playComicBlip(920, 0.08, 'sine');
+          powerObserver.unobserve(powerGridPanel);
+        }
+      });
+    }, { threshold: 0.3 });
+    powerObserver.observe(powerGridPanel);
+  }
+
 });
+

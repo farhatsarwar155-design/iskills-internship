@@ -1672,45 +1672,185 @@ p { margin: 0; }
 }
 
 /* =========================================================
-   SECRET / EASTER-EGG PAGE
+   SECRET / EASTER-EGG PAGE & DEVELOPER TERMINAL
    ========================================================= */
 .secret-page {
   position: fixed;
   inset: 0;
   z-index: 2000;
-  background: rgba(42, 10, 18, 0.88);
+  background: rgba(16, 32, 48, 0.88);
   display: none;
   align-items: center;
   justify-content: center;
   padding: 20px;
-  backdrop-filter: blur(6px);
+  backdrop-filter: blur(8px);
 }
 .secret-page.open { display: flex; }
-.secret-inner {
-  background: var(--blush);
+.secret-inner.comic-terminal {
+  background: #132638;
   border: 4px solid var(--ink);
   border-radius: 16px;
-  box-shadow: var(--panel-shadow-lg);
-  max-width: 440px;
-  padding: 40px;
-  text-align: center;
-  transform: rotate(-1deg);
+  box-shadow: var(--panel-shadow-lg), 0 0 30px rgba(60, 109, 154, 0.35);
+  width: 100%;
+  max-width: 580px;
+  padding: 24px;
+  text-align: left;
+  transform: rotate(-0.5deg);
   animation: pop-modal 0.25s var(--ease-comic);
+  color: #EDE4D3;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.terminal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 2px dashed rgba(237, 228, 211, 0.25);
+  padding-bottom: 10px;
 }
 .secret-stamp {
   display: inline-block;
   font-family: var(--font-display);
-  color: var(--wine);
+  color: var(--denim);
   border: 2px solid var(--ink);
   border-radius: 30px;
   padding: 4px 14px;
-  font-size: 0.75rem;
-  margin-bottom: 16px;
-  transform: rotate(-2deg);
+  font-size: 0.8rem;
+  letter-spacing: 0.05em;
   background: var(--beige-pale);
 }
-.secret-inner p:not(.secret-stamp) {
-  font-family: var(--font-hand);
-  font-size: 1.15rem;
-  color: var(--wine-deep);
+.terminal-body {
+  background: #0d1a26;
+  border: 2px solid #244869;
+  border-radius: 8px;
+  padding: 16px;
+  min-height: 170px;
+  max-height: 240px;
+  overflow-y: auto;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 0.92rem;
+  line-height: 1.5;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
+.term-line {
+  margin: 0;
+  color: #EDE4D3;
+  word-break: break-word;
+}
+.term-line.term-user {
+  color: #96BFE5;
+  font-weight: bold;
+}
+.term-line.term-success {
+  color: #4ade80;
+}
+.term-highlight {
+  color: #F8D57E;
+  font-weight: bold;
+  background: rgba(248, 213, 126, 0.15);
+  padding: 1px 5px;
+  border-radius: 4px;
+}
+.terminal-input-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #0d1a26;
+  border: 2px solid var(--denim-light);
+  border-radius: 8px;
+  padding: 6px 12px;
+}
+.term-prompt {
+  font-family: 'Courier New', Courier, monospace;
+  font-weight: bold;
+  color: #96BFE5;
+  font-size: 0.88rem;
+}
+.term-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: #FFFFFF;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 0.95rem;
+  outline: none;
+}
+.term-quick-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 4px;
+}
+.term-tag {
+  background: #244869;
+  color: #EDE4D3;
+  border: 1.5px solid var(--ink);
+  border-radius: 6px;
+  padding: 3px 10px;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 0.78rem;
+  cursor: pointer;
+  transition: all 0.15s var(--ease-comic);
+}
+.term-tag:hover {
+  background: #3C6D9A;
+  color: #FFFFFF;
+  transform: translateY(-2px);
+}
+
+/* =========================================================
+   SUPERHERO POWER GRID
+   ========================================================= */
+.power-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 10px;
+}
+.power-item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.power-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: 700;
+  font-size: 0.92rem;
+  color: var(--ink);
+}
+.power-name {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.power-val {
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  color: var(--denim);
+  letter-spacing: 0.03em;
+}
+.power-bar-track {
+  width: 100%;
+  height: 12px;
+  background: rgba(16, 32, 48, 0.12);
+  border: 2px solid var(--ink);
+  border-radius: 8px;
+  overflow: hidden;
+  position: relative;
+}
+.power-bar-fill {
+  height: 100%;
+  width: 0;
+  background: linear-gradient(90deg, var(--denim) 0%, #3C6D9A 60%, var(--denim-light) 100%);
+  border-radius: 6px;
+  transition: width 1.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.about-panel-stats.in-view .power-bar-fill {
+  width: var(--w, 90%);
+}
+

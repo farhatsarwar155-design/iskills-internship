@@ -175,6 +175,52 @@
         </ul>
       </div>
 
+      <div class="panel panel--tilt-r about-panel-stats" style="grid-column: 1 / -1;">
+        <div class="panel-tape" aria-hidden="true"></div>
+        <header class="issue-strip">
+          <span class="issue-number">CHARACTER STATS</span>
+          <span class="issue-genre">SUPERHERO POWER GRID</span>
+        </header>
+        <h3 class="panel-heading" style="margin-bottom: 16px;">Farhat's Engineering Power Grid</h3>
+        <div class="power-grid">
+          <div class="power-item">
+            <div class="power-info">
+              <span class="power-name">Mobile Architecture &middot; Flutter &amp; Dart</span>
+              <span class="power-val">95%</span>
+            </div>
+            <div class="power-bar-track"><div class="power-bar-fill" style="--w: 95%;"></div></div>
+          </div>
+          <div class="power-item">
+            <div class="power-info">
+              <span class="power-name">Full Stack Engineering &middot; Next.js 16 &amp; TypeScript</span>
+              <span class="power-val">92%</span>
+            </div>
+            <div class="power-bar-track"><div class="power-bar-fill" style="--w: 92%;"></div></div>
+          </div>
+          <div class="power-item">
+            <div class="power-info">
+              <span class="power-name">Database Systems &amp; Realtime &middot; Supabase, PostgreSQL, Firebase</span>
+              <span class="power-val">88%</span>
+            </div>
+            <div class="power-bar-track"><div class="power-bar-fill" style="--w: 88%;"></div></div>
+          </div>
+          <div class="power-item">
+            <div class="power-info">
+              <span class="power-name">AI Integration &amp; APIs &middot; Gemini 1.5 Flash, REST</span>
+              <span class="power-val">86%</span>
+            </div>
+            <div class="power-bar-track"><div class="power-bar-fill" style="--w: 86%;"></div></div>
+          </div>
+          <div class="power-item">
+            <div class="power-info">
+              <span class="power-name">Rapid Problem Solving &amp; Shipping Velocity</span>
+              <span class="power-val">96%</span>
+            </div>
+            <div class="power-bar-track"><div class="power-bar-fill" style="--w: 96%;"></div></div>
+          </div>
+        </div>
+      </div>
+
       <div class="bubble bubble--float bubble--about-2">
         <p>To be continued in Chapter 2 &rarr;</p>
       </div>
@@ -909,10 +955,26 @@
 
 <!-- Secret bonus panel — Easter egg, press "C" anywhere on the page -->
 <div class="secret-page" id="secretPage" aria-hidden="true">
-  <div class="secret-inner">
-    <p class="secret-stamp">BONUS PANEL - UNLOCKED</p>
-    <p>You found the hidden page. That's the kind of curiosity I put into every project. ✦</p>
-    <button class="btn-begin btn-begin--sm" id="closeSecret">Close</button>
+  <div class="secret-inner comic-terminal">
+    <div class="terminal-header">
+      <span class="secret-stamp">FS-DEV-OS v1.0 &middot; TERMINAL</span>
+      <button class="resume-modal-close" id="closeSecret" aria-label="Close terminal">✕</button>
+    </div>
+    <div class="terminal-body" id="terminalOutput">
+      <p class="term-line">✦ Welcome to Farhat's Developer Comic Console!</p>
+      <p class="term-line">Type <span class="term-highlight">help</span>, <span class="term-highlight">skills</span>, <span class="term-highlight">projects</span>, <span class="term-highlight">about</span>, or <span class="term-highlight">hire</span>.</p>
+    </div>
+    <form class="terminal-input-row" id="terminalForm">
+      <span class="term-prompt">farhat@comic:~$</span>
+      <input type="text" id="terminalInput" class="term-input" placeholder="Type a command (e.g. help)..." autocomplete="off">
+    </form>
+    <div class="term-quick-tags">
+      <button type="button" class="term-tag" data-cmd="help">help</button>
+      <button type="button" class="term-tag" data-cmd="skills">skills</button>
+      <button type="button" class="term-tag" data-cmd="projects">projects</button>
+      <button type="button" class="term-tag" data-cmd="hire">hire</button>
+      <button type="button" class="term-tag" data-cmd="clear">clear</button>
+    </div>
   </div>
 </div>
 
