@@ -250,6 +250,120 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  /* ---------- Web Audio Synthesizer (Comic Sound FX) ---------- */
+  let soundEnabled = true;
+  let audioCtx = null;
+
+  function initAudio() {
+    if (!audioCtx) {
+      const AudioContext = window.AudioContext || window.webkitAudioContext;
+      if (AudioContext) audioCtx = new AudioContext();
+    }
+  }
+
+  function playComicBlip(frequency = 520, duration = 0.06, type = 'sine') {
+    if (!soundEnabled) return;
+    try {
+      initAudio();
+      if (!audioCtx) return;
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = type;
+      osc.frequency.setValueAtTime(frequency, audioCtx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(frequency * 1.5, audioCtx.currentTime + duration);
+
+      gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start();
+      osc.stop(audioCtx.currentTime + duration);
+    } catch (e) {
+      // Audio fallback silent
+    }
+  }
+
+  const soundToggle = document.getElementById('soundToggle');
+  if (soundToggle) {
+    soundToggle.addEventListener('click', () => {
+      initAudio();
+      soundEnabled = !soundEnabled;
+      soundToggle.classList.toggle('muted', !soundEnabled);
+      const icon = soundToggle.querySelector('.sound-icon');
+      const text = soundToggle.querySelector('.sound-text');
+      if (icon) icon.textContent = soundEnabled ? '🔊' : '🔇';
+      if (text) text.textContent = soundEnabled ? 'FX' : 'OFF';
+      if (soundEnabled) playComicBlip(680, 0.08, 'triangle');
+    });
+  }
+
+  // Play blip on interactive buttons & tabs
+  document.querySelectorAll('.nav-tab, .btn-begin, .filter-chip, .copy-btn').forEach(el => {
+    el.addEventListener('click', () => {
+      playComicBlip(620, 0.06, 'triangle');
+    });
+  });
+
+  /* ---------- Animated Stats Counter ---------- */
+  const statNumbers = document.querySelectorAll('.stat-num[data-target]');
+  const statsObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const el = entry.target;
+        const target = parseInt(el.getAttribute('data-target'), 10);
+        if (!isNaN(target)) {
+          let count = 0;
+          const duration = 1200;
+          const stepTime = Math.max(Math.floor(duration / target), 30);
+          const timer = setInterval(() => {
+            count++;
+            el.textContent = count + '+';
+            if (count >= target) {
+              clearInterval(timer);
+              el.textContent = target + '+';
+            }
+          }, stepTime);
+        }
+        statsObserver.unobserve(el);
+      }
+    });
+  }, { threshold: 0.5 });
+  statNumbers.forEach(num => statsObserver.observe(num));
+
+  /* ---------- Copy to Clipboard Toast ---------- */
+  const comicToast = document.getElementById('comicToast');
+  let toastTimeout = null;
+
+  function showToast(msg) {
+    if (!comicToast) return;
+    comicToast.textContent = msg;
+    comicToast.classList.add('show');
+    playComicBlip(750, 0.07, 'sine');
+    clearTimeout(toastTimeout);
+    toastTimeout = setTimeout(() => {
+      comicToast.classList.remove('show');
+    }, 2200);
+  }
+
+  document.querySelectorAll('.copy-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const textToCopy = btn.getAttribute('data-copy');
+      if (textToCopy) {
+        navigator.clipboard.writeText(textToCopy).then(() => {
+          showToast(`📋 Copied: ${textToCopy}`);
+          btn.textContent = '✓';
+          setTimeout(() => { btn.textContent = 'Copy'; }, 1800);
+        }).catch(() => {
+          showToast(`📋 ${textToCopy}`);
+        });
+      }
+    });
+  });
+
   /* ---------- Easter egg: secret bonus page (press "C") ---------- */
   const secretPage = document.getElementById('secretPage');
   const closeSecret = document.getElementById('closeSecret');
@@ -258,6 +372,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (e.key && e.key.toLowerCase() === 'c' && secretPage && !secretPage.classList.contains('open')) {
       secretPage.classList.add('open');
       secretPage.setAttribute('aria-hidden', 'false');
+      playComicBlip(880, 0.12, 'square');
     }
     if (e.key === 'Escape') {
       if (secretPage && secretPage.classList.contains('open')) {

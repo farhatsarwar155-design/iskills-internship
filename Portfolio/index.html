@@ -40,6 +40,9 @@
     <li><a href="#resume" class="nav-tab" data-tab="5"><em>05</em>Resume</a></li>
     <li><a href="#contact" class="nav-tab" data-tab="6"><em>06</em>Contact</a></li>
   </ul>
+  <button class="sound-toggle" id="soundToggle" title="Toggle comic sound effects" aria-label="Toggle comic sound effects">
+    <span class="sound-icon">🔊</span> <span class="sound-text">FX</span>
+  </button>
 </nav>
 
 <main>
@@ -93,6 +96,28 @@
       <span>Scroll down</span>
       <span class="scroll-arrow" aria-hidden="true">&darr;</span>
     </a>
+  </section>
+
+  <!-- ============ ORIGIN STATS BANNER ============ -->
+  <section class="stats-strip" aria-label="Key Developer Stats">
+    <div class="stats-grid">
+      <div class="stat-card">
+        <span class="stat-num" data-target="20">20+</span>
+        <span class="stat-label">Mobile Apps Shipped</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-num" data-target="12">12+</span>
+        <span class="stat-label">Projects Engineered</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-num">COMSATS</span>
+        <span class="stat-label">BS Computer Science</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-num">iSkills</span>
+        <span class="stat-label">Internship Programme</span>
+      </div>
+    </div>
   </section>
 
   <!-- ============ CHAPTER 1 — ABOUT ME ============ -->
@@ -752,15 +777,17 @@
         <div class="panel-tape" aria-hidden="true"></div>
         <h3 class="panel-heading">Find Me Elsewhere</h3>
         <ul class="contact-links">
-          <li>
+          <li class="contact-item-row">
             <a href="mailto:farhatsarwar.155@gmail.com">
               <span class="contact-icon">&#9993;</span> farhatsarwar.155@gmail.com
             </a>
+            <button class="copy-btn" data-copy="farhatsarwar.155@gmail.com" title="Copy Email">Copy</button>
           </li>
-          <li>
+          <li class="contact-item-row">
             <a href="tel:+923262737155">
               <span class="contact-icon">&#9742;</span> +92-326-2737155
             </a>
+            <button class="copy-btn" data-copy="+923262737155" title="Copy Phone Number">Copy</button>
           </li>
           <li>
             <a href="https://www.linkedin.com/in/farhat-muhammad-sarwar-391a96411/" target="_blank" rel="noopener noreferrer">
@@ -790,6 +817,9 @@
   </section>
 
 </main>
+
+<!-- Floating Copy Toast Notification -->
+<div class="comic-toast" id="comicToast" role="alert" aria-live="polite"></div>
 
 <!-- Resume Preview Modal -->
 <div class="resume-modal" id="resumeModal" role="dialog" aria-modal="true" aria-label="Resume Preview" aria-hidden="true">
