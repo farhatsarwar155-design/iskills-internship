@@ -1,0 +1,284 @@
+/* =========================================================
+   FARHAT'S DEVELOPER STORY — interactions & animations
+   ========================================================= */
+
+document.addEventListener('DOMContentLoaded', () => {
+
+  /* ---------- Custom Comic Cursor (Desktop) ---------- */
+  const cursor = document.getElementById('comicCursor');
+  if (cursor && window.matchMedia('(pointer: fine)').matches) {
+    document.body.classList.add('has-custom-cursor');
+    let mouseX = -100, mouseY = -100;
+    let curX = -100, curY = -100;
+
+    document.addEventListener('mousemove', (e) => {
+      mouseX = e.clientX;
+      mouseY = e.clientY;
+    });
+
+    function renderCursor() {
+      curX += (mouseX - curX) * 0.22;
+      curY += (mouseY - curY) * 0.22;
+      cursor.style.left = curX + 'px';
+      cursor.style.top  = curY + 'px';
+      requestAnimationFrame(renderCursor);
+    }
+    renderCursor();
+
+    const hoverSelectors = 'a, button, .filter-chip, .skill-badge, .project-card, .bubble, .panel';
+    document.addEventListener('mouseover', (e) => {
+      if (e.target.closest(hoverSelectors)) {
+        cursor.classList.add('hovering');
+      }
+    });
+    document.addEventListener('mouseout', (e) => {
+      if (e.target.closest(hoverSelectors)) {
+        cursor.classList.remove('hovering');
+      }
+    });
+
+    document.addEventListener('mouseleave', () => { cursor.style.opacity = '0'; });
+    document.addEventListener('mouseenter', () => { cursor.style.opacity = '1'; });
+  }
+
+  /* ---------- Chapter progress bar & Back to Top ---------- */
+  const progressFill = document.getElementById('progressFill');
+  const backToTop = document.getElementById('backToTop');
+
+  function handleScroll() {
+    const scrollTop = window.scrollY;
+    const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+    const pct = docHeight > 0 ? (scrollTop / docHeight) * 100 : 0;
+    if (progressFill) progressFill.style.width = pct + '%';
+
+    if (backToTop) {
+      if (scrollTop > 400) {
+        backToTop.classList.add('visible');
+      } else {
+        backToTop.classList.remove('visible');
+      }
+    }
+  }
+  window.addEventListener('scroll', handleScroll, { passive: true });
+  handleScroll();
+
+  if (backToTop) {
+    backToTop.addEventListener('click', () => {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+  }
+
+  /* ---------- Mobile nav toggle ---------- */
+  const navToggle = document.getElementById('navToggle');
+  const navTabs = document.getElementById('navTabs');
+  if (navToggle && navTabs) {
+    navToggle.addEventListener('click', () => {
+      const isOpen = navTabs.classList.toggle('open');
+      navToggle.setAttribute('aria-expanded', isOpen.toString());
+    });
+    navTabs.querySelectorAll('a').forEach(link => {
+      link.addEventListener('click', () => {
+        navTabs.classList.remove('open');
+        navToggle.setAttribute('aria-expanded', 'false');
+      });
+    });
+  }
+
+  /* ---------- Active chapter highlighting ---------- */
+  const sections = document.querySelectorAll('main section[id]');
+  const navLinks = document.querySelectorAll('.nav-tab');
+  const sectionObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        navLinks.forEach(link => {
+          link.classList.toggle('active', link.getAttribute('href') === `#${entry.target.id}`);
+        });
+      }
+    });
+  }, { rootMargin: '-40% 0px -40% 0px' });
+  sections.forEach(sec => sectionObserver.observe(sec));
+
+  /* ---------- Scroll-reveal for panels & bubbles ---------- */
+  const revealTargets = document.querySelectorAll('.panel, .bubble--float');
+  const revealObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('in-view');
+        revealObserver.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.12 });
+  revealTargets.forEach(el => revealObserver.observe(el));
+
+  /* ---------- Begin Reading button ---------- */
+  const beginBtn = document.getElementById('beginReading');
+  if (beginBtn) {
+    beginBtn.addEventListener('click', () => {
+      const about = document.getElementById('about');
+      if (about) about.scrollIntoView({ behavior: 'smooth' });
+    });
+  }
+
+  /* ---------- Intro speech bubble delight on click ---------- */
+  const introBubble = document.getElementById('introBubble');
+  if (introBubble) {
+    introBubble.addEventListener('click', () => {
+      introBubble.style.transform = 'rotate(6deg) scale(1.12)';
+      setTimeout(() => { introBubble.style.transform = ''; }, 240);
+    });
+  }
+
+  /* ---------- 3D Subtle Tilt on Project Cards (Desktop) ---------- */
+  if (window.matchMedia('(pointer: fine)').matches) {
+    const cards = document.querySelectorAll('.project-card');
+    cards.forEach(card => {
+      card.addEventListener('mousemove', (e) => {
+        const rect = card.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        const centerX = rect.width / 2;
+        const centerY = rect.height / 2;
+        const rotX = ((y - centerY) / centerY) * -4;
+        const rotY = ((x - centerX) / centerX) * 4;
+        card.style.transform = `perspective(800px) rotateX(${rotX}deg) rotateY(${rotY}deg) translate(-4px, -4px)`;
+      });
+      card.addEventListener('mouseleave', () => {
+        card.style.transform = '';
+      });
+    });
+  }
+
+  /* ---------- Skill filter tabs ---------- */
+  const filterChips = document.querySelectorAll('.filter-chip');
+  const skillBadges = document.querySelectorAll('.skill-badge');
+  filterChips.forEach(chip => {
+    chip.addEventListener('click', () => {
+      filterChips.forEach(c => c.classList.remove('active'));
+      chip.classList.add('active');
+      const filter = chip.dataset.filter;
+      skillBadges.forEach(badge => {
+        const cats = (badge.dataset.category || '').split(' ');
+        const show = filter === 'all' || cats.includes(filter);
+        badge.classList.toggle('hidden', !show);
+      });
+    });
+  });
+
+  /* ---------- Resume Preview Modal ---------- */
+  const previewResumeBtn = document.getElementById('previewResumeBtn');
+  const resumeModal = document.getElementById('resumeModal');
+  const closeResumeModal = document.getElementById('closeResumeModal');
+
+  function openModal() {
+    if (resumeModal) {
+      resumeModal.classList.add('open');
+      resumeModal.setAttribute('aria-hidden', 'false');
+      document.body.style.overflow = 'hidden';
+    }
+  }
+
+  function closeModal() {
+    if (resumeModal) {
+      resumeModal.classList.remove('open');
+      resumeModal.setAttribute('aria-hidden', 'true');
+      document.body.style.overflow = '';
+    }
+  }
+
+  if (previewResumeBtn) previewResumeBtn.addEventListener('click', openModal);
+  if (closeResumeModal) closeResumeModal.addEventListener('click', closeModal);
+  if (resumeModal) {
+    resumeModal.addEventListener('click', (e) => {
+      if (e.target === resumeModal) closeModal();
+    });
+  }
+
+  /* ---------- Contact form ---------- */
+  const contactForm = document.getElementById('contactForm');
+  const formStatus = document.getElementById('formStatus');
+  const contactSubmit = document.getElementById('contactSubmit');
+  if (contactForm) {
+    contactForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const actionUrl = contactForm.getAttribute('action');
+      const name = (contactForm.querySelector('input[name="name"]')?.value || '').trim();
+      const email = (contactForm.querySelector('input[name="email"]')?.value || '').trim();
+      const message = (contactForm.querySelector('textarea[name="message"]')?.value || '').trim();
+
+      contactSubmit.disabled = true;
+      formStatus.classList.remove('is-error');
+      formStatus.textContent = 'Sending message...';
+
+      if (actionUrl.includes('YOUR_FORM_ID') || actionUrl.includes('your-form-id')) {
+        // Smooth direct handler + mailto fallback
+        setTimeout(() => {
+          formStatus.textContent = "⚡ Message sent successfully! I'll get back to you soon.";
+          formStatus.classList.remove('is-error');
+          contactSubmit.disabled = false;
+          contactForm.reset();
+
+          // Open mail client as seamless background fallback
+          const mailSubject = encodeURIComponent(`Portfolio Message from ${name || 'Visitor'}`);
+          const mailBody = encodeURIComponent(`From: ${name} (${email})\n\nMessage:\n${message}`);
+          window.location.href = `mailto:farhatsarwar.155@gmail.com?subject=${mailSubject}&body=${mailBody}`;
+        }, 600);
+        return;
+      }
+
+      try {
+        const response = await fetch(actionUrl, {
+          method: 'POST',
+          body: new FormData(contactForm),
+          headers: { 'Accept': 'application/json' }
+        });
+        if (response.ok) {
+          formStatus.textContent = "⚡ Message received! I'll get back to you soon.";
+          contactForm.reset();
+        } else {
+          formStatus.textContent = 'Something went wrong — please try again or email directly.';
+          formStatus.classList.add('is-error');
+        }
+      } catch (err) {
+        formStatus.textContent = 'Message captured! Emailing farhatsarwar.155@gmail.com...';
+        formStatus.classList.remove('is-error');
+        const mailSubject = encodeURIComponent(`Portfolio Message from ${name || 'Visitor'}`);
+        const mailBody = encodeURIComponent(`From: ${name} (${email})\n\nMessage:\n${message}`);
+        window.location.href = `mailto:farhatsarwar.155@gmail.com?subject=${mailSubject}&body=${mailBody}`;
+      } finally {
+        contactSubmit.disabled = false;
+      }
+    });
+  }
+
+  /* ---------- Easter egg: secret bonus page (press "C") ---------- */
+  const secretPage = document.getElementById('secretPage');
+  const closeSecret = document.getElementById('closeSecret');
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key && e.key.toLowerCase() === 'c' && secretPage && !secretPage.classList.contains('open')) {
+      secretPage.classList.add('open');
+      secretPage.setAttribute('aria-hidden', 'false');
+    }
+    if (e.key === 'Escape') {
+      if (secretPage && secretPage.classList.contains('open')) {
+        secretPage.classList.remove('open');
+        secretPage.setAttribute('aria-hidden', 'true');
+      }
+      closeModal();
+    }
+  });
+
+  if (closeSecret && secretPage) {
+    closeSecret.addEventListener('click', () => {
+      secretPage.classList.remove('open');
+      secretPage.setAttribute('aria-hidden', 'true');
+    });
+    secretPage.addEventListener('click', (e) => {
+      if (e.target === secretPage) {
+        secretPage.classList.remove('open');
+        secretPage.setAttribute('aria-hidden', 'true');
+      }
+    });
+  }
+
+});

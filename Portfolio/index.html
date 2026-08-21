@@ -1,0 +1,828 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Farhat's Developer Story · Portfolio</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='48' fill='%23244869' stroke='%23102030' stroke-width='4'/%3E%3Ctext x='50' y='68' font-family='Arial, sans-serif' font-weight='900' font-size='56' fill='%23EDE4D3' text-anchor='middle'%3EFS%3C/text%3E%3C/svg%3E">
+<meta name="description" content="Farhat's interactive comic-style developer portfolio — follow the story chapter by chapter.">
+
+<!-- Fonts: Anton for bold comic display headlines, Permanent Marker for hand-lettered speech-bubble text, Work Sans for clean readable body copy -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Permanent+Marker&family=Work+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- Custom Comic Cursor -->
+<div class="comic-cursor" id="comicCursor" aria-hidden="true">
+  <div class="cursor-dot"></div>
+</div>
+
+<!-- Comic chapter progress bar -->
+<div class="progress-rail" aria-hidden="true">
+  <div class="progress-fill" id="progressFill"></div>
+</div>
+
+<!-- Floating comic-tab navigation -->
+<nav class="comic-nav" id="comicNav">
+  <a href="#cover" class="nav-brand">FS<span class="nav-brand-dot">.</span></a>
+  <button class="nav-toggle" id="navToggle" aria-label="Open chapter menu" aria-expanded="false">
+    <span></span><span></span><span></span>
+  </button>
+  <ul class="nav-tabs" id="navTabs">
+    <li><a href="#about" class="nav-tab" data-tab="1"><em>01</em>About</a></li>
+    <li><a href="#skills" class="nav-tab" data-tab="2"><em>02</em>Skills</a></li>
+    <li><a href="#projects" class="nav-tab" data-tab="3"><em>03</em>Projects</a></li>
+    <li><a href="#timeline" class="nav-tab" data-tab="4"><em>04</em>Timeline</a></li>
+    <li><a href="#resume" class="nav-tab" data-tab="5"><em>05</em>Resume</a></li>
+    <li><a href="#contact" class="nav-tab" data-tab="6"><em>06</em>Contact</a></li>
+  </ul>
+</nav>
+
+<main>
+
+  <!-- ============ COVER / LANDING ============ -->
+  <section class="cover" id="cover">
+    <div class="halftone-layer" aria-hidden="true"></div>
+    <div class="cover-decor cover-decor--burst" aria-hidden="true">
+      <svg viewBox="0 0 200 200"><polygon points="100,0 122,70 195,70 136,112 158,182 100,140 42,182 64,112 5,70 78,70" /></svg>
+    </div>
+    <div class="cover-decor cover-decor--ring" aria-hidden="true"></div>
+
+    <!-- Comic Action Splats -->
+    <div class="comic-splat splat-pow" aria-hidden="true">POW!</div>
+    <div class="comic-splat splat-boom" aria-hidden="true">BOOM! ✦</div>
+
+    <div class="cover-inner">
+      <p class="eyebrow-stamp">ISSUE №01 &mdash; ORIGIN STORY</p>
+
+      <h1 class="cover-title">
+        <span class="line">MY</span>
+        <span class="line line--accent">DEVELOPER</span>
+        <span class="line">STORY</span>
+      </h1>
+
+      <p class="cover-subtitle">Every project begins with an idea.</p>
+
+      <div class="cover-meta">
+        <p class="cover-name">FARHAT</p>
+        <p class="cover-role">Computer Science Student &middot; Flutter Developer &middot; AI Enthusiast</p>
+      </div>
+
+      <button class="btn-begin" id="beginReading">
+        Begin Reading <span class="arrow">&rarr;</span>
+      </button>
+    </div>
+
+    <div class="cover-portrait">
+      <div class="portrait-frame">
+        <div class="portrait-placeholder">
+          <img src="images/profile.jpg" alt="Farhat Sarwar" onerror="this.src='images/profile.png'">
+        </div>
+      </div>
+      <div class="portrait-ring" aria-hidden="true"></div>
+      <div class="bubble bubble--intro" id="introBubble">
+        <p>Hey! Welcome to my story.</p>
+      </div>
+    </div>
+
+    <a href="#about" class="scroll-cue" aria-label="Scroll to Chapter 1">
+      <span>Scroll down</span>
+      <span class="scroll-arrow" aria-hidden="true">&darr;</span>
+    </a>
+  </section>
+
+  <!-- ============ CHAPTER 1 — ABOUT ME ============ -->
+  <section class="chapter chapter--beige" id="about">
+    <div class="halftone-layer halftone-layer--dark" aria-hidden="true"></div>
+
+    <div class="chapter-head">
+      <span class="chapter-stamp">01</span>
+      <h2 class="chapter-title">About Me</h2>
+      <p class="chapter-kicker">In which our protagonist is introduced.</p>
+    </div>
+
+    <div class="about-grid">
+
+      <div class="panel panel--tilt-l about-panel-photo">
+        <div class="panel-tape" aria-hidden="true"></div>
+        <div class="about-photo-frame">
+          <img src="images/profile.jpg" alt="Farhat Sarwar" onerror="this.src='images/profile.png'">
+        </div>
+        <p class="panel-caption">Panel 1 - The origin</p>
+      </div>
+
+      <div class="panel panel--tilt-r about-panel-text">
+        <div class="panel-tape" aria-hidden="true"></div>
+        <p class="drop-cap">
+          Hi, I'm Farhat, a BS Computer Science student at COMSATS University Islamabad, Vehari Campus.
+          My developer arc started with building Flutter apps &mdash; now I've shipped <strong>20+ mobile apps</strong>
+          ranging from POS systems to real estate platforms. Somewhere between turning ideas into running code
+          and crafting smooth mobile experiences, I found my passion.
+        </p>
+      </div>
+
+      <div class="bubble bubble--float bubble--about-1">
+        <p>Plot twist: I've shipped 20+ mobile apps solo!</p>
+      </div>
+
+      <div class="panel panel--tilt-r about-panel-quote">
+        <div class="panel-tape" aria-hidden="true"></div>
+        <p>
+          I'm most at home exploring <strong>Flutter</strong>, <strong>full-stack development</strong>, and
+          <strong>Artificial Intelligence</strong> &mdash; building things end-to-end, one bug and one deploy at a time.
+        </p>
+      </div>
+
+      <div class="panel panel--tilt-l about-panel-list">
+        <div class="panel-tape" aria-hidden="true"></div>
+        <h3 class="panel-heading">A few running plot threads</h3>
+        <ul class="trait-list">
+          <li><span class="trait-icon">◆</span>Built 20+ Flutter mobile apps solo, from concept to deployment</li>
+          <li><span class="trait-icon">◆</span>Actively exploring full-stack web development alongside mobile</li>
+          <li><span class="trait-icon">◆</span>Passionate about AI/ML integration into real apps (e.g. Gemini API)</li>
+          <li><span class="trait-icon">◆</span>Completed the iSkills Internship &mdash; hands-on real-world project experience</li>
+          <li><span class="trait-icon">◆</span>Determined to learn in public &mdash; one project, one bug, one deploy at a time</li>
+        </ul>
+      </div>
+
+      <div class="bubble bubble--float bubble--about-2">
+        <p>To be continued in Chapter 2 &rarr;</p>
+      </div>
+
+    </div>
+
+    <a href="#skills" class="chapter-next">Next: Chapter 2 — Skills <span class="arrow">&rarr;</span></a>
+  </section>
+
+  <!-- ============ CHAPTER 2 — SKILLS ============ -->
+  <section class="chapter chapter--wine" id="skills">
+    <div class="halftone-layer" aria-hidden="true"></div>
+
+    <div class="chapter-head">
+      <span class="chapter-stamp">02</span>
+      <h2 class="chapter-title">Skills</h2>
+      <p class="chapter-kicker">Every hero collects a few power-ups along the way.</p>
+      <p class="skills-headline">"Flutter Developer &middot; CS Student &middot; AI Enthusiast &middot; Full Stack Explorer &middot; 20+ Apps Shipped &middot; Seeking Internship &amp; Growth Opportunities"</p>
+    </div>
+
+    <!-- Animated marquee banner -->
+    <div class="skills-marquee" aria-hidden="true">
+      <div class="marquee-track">
+        <span>DART</span><span class="dot">★</span>
+        <span>FLUTTER</span><span class="dot">★</span>
+        <span>PYTHON</span><span class="dot">★</span>
+        <span>JAVASCRIPT</span><span class="dot">★</span>
+        <span>FIREBASE</span><span class="dot">★</span>
+        <span>REST APIs</span><span class="dot">★</span>
+        <span>MONGODB</span><span class="dot">★</span>
+        <span>MYSQL</span><span class="dot">★</span>
+        <span>NODE.JS</span><span class="dot">★</span>
+        <span>GEMINI API</span><span class="dot">★</span>
+        <span>HTML</span><span class="dot">★</span>
+        <span>CSS</span><span class="dot">★</span>
+        <span>GIT</span><span class="dot">★</span>
+        <span>DART</span><span class="dot">★</span>
+        <span>FLUTTER</span><span class="dot">★</span>
+        <span>PYTHON</span><span class="dot">★</span>
+        <span>JAVASCRIPT</span><span class="dot">★</span>
+        <span>FIREBASE</span><span class="dot">★</span>
+        <span>REST APIs</span><span class="dot">★</span>
+        <span>MONGODB</span><span class="dot">★</span>
+        <span>MYSQL</span><span class="dot">★</span>
+      </div>
+    </div>
+
+    <h3 class="skills-subhead">Technical Skills</h3>
+
+    <div class="skill-filters" id="skillFilters" role="tablist" aria-label="Filter skills by category">
+      <button class="filter-chip active" data-filter="all">All</button>
+      <button class="filter-chip" data-filter="mobile">Mobile Dev</button>
+      <button class="filter-chip" data-filter="web">Web &amp; Frontend</button>
+      <button class="filter-chip" data-filter="backend">Backend &amp; DBs</button>
+      <button class="filter-chip" data-filter="languages">Languages</button>
+      <button class="filter-chip" data-filter="integrations">Integrations &amp; Tools</button>
+    </div>
+
+    <ul class="skill-grid" id="skillGrid">
+      <!-- Mobile -->
+      <li class="skill-badge" data-category="mobile"><span class="badge-icon">▲</span>Flutter</li>
+      <li class="skill-badge" data-category="mobile languages"><span class="badge-icon">▲</span>Dart</li>
+      <li class="skill-badge" data-category="mobile"><span class="badge-icon">▲</span>Mobile App Development</li>
+      <li class="skill-badge" data-category="mobile integrations"><span class="badge-icon">▲</span>Android Studio</li>
+
+      <!-- Web & Frontend -->
+      <li class="skill-badge" data-category="web languages"><span class="badge-icon">◆</span>HTML5</li>
+      <li class="skill-badge" data-category="web languages"><span class="badge-icon">◆</span>CSS3</li>
+      <li class="skill-badge" data-category="web languages"><span class="badge-icon">◆</span>JavaScript</li>
+      <li class="skill-badge" data-category="web"><span class="badge-icon">◆</span>Responsive Web Design</li>
+      <li class="skill-badge" data-category="web"><span class="badge-icon">◆</span>Front-End Architecture</li>
+
+      <!-- Backend & DBs -->
+      <li class="skill-badge" data-category="backend"><span class="badge-icon">●</span>Node.js</li>
+      <li class="skill-badge" data-category="backend integrations"><span class="badge-icon">●</span>REST APIs</li>
+      <li class="skill-badge" data-category="backend"><span class="badge-icon">●</span>Firebase</li>
+      <li class="skill-badge" data-category="backend"><span class="badge-icon">●</span>MongoDB</li>
+      <li class="skill-badge" data-category="backend"><span class="badge-icon">●</span>MySQL</li>
+
+      <!-- Languages -->
+      <li class="skill-badge" data-category="languages"><span class="badge-icon">✦</span>Python</li>
+      <li class="skill-badge" data-category="languages"><span class="badge-icon">✦</span>C++</li>
+      <li class="skill-badge" data-category="languages backend"><span class="badge-icon">✦</span>SQL</li>
+
+      <!-- Integrations & Tools -->
+      <li class="skill-badge" data-category="integrations mobile"><span class="badge-icon">■</span>Google Maps API</li>
+      <li class="skill-badge" data-category="integrations mobile"><span class="badge-icon">■</span>Payment Gateway Integration</li>
+      <li class="skill-badge" data-category="integrations"><span class="badge-icon">■</span>Gemini 1.5 Flash API</li>
+      <li class="skill-badge" data-category="integrations mobile"><span class="badge-icon">■</span>PDF Generation</li>
+      <li class="skill-badge" data-category="integrations mobile"><span class="badge-icon">■</span>Document Scanner</li>
+      <li class="skill-badge" data-category="integrations"><span class="badge-icon">■</span>Git &amp; GitHub</li>
+      <li class="skill-badge" data-category="integrations"><span class="badge-icon">■</span>VS Code</li>
+    </ul>
+
+    <div class="bubble bubble--float bubble--skills" id="skillsBubble">
+      <p>Tap a category chip &mdash; skills sort instantly!</p>
+    </div>
+
+    <h3 class="skills-subhead skills-subhead--spaced">Beyond the Code</h3>
+
+    <div class="beyond-grid">
+      <div class="panel panel--tilt-l beyond-panel">
+        <div class="panel-tape" aria-hidden="true"></div>
+        <h4 class="panel-heading">Soft Skills</h4>
+        <ul class="trait-list">
+          <li><span class="trait-icon">◆</span>Problem-solving mindset</li>
+          <li><span class="trait-icon">◆</span>Self-discipline &amp; time management</li>
+          <li><span class="trait-icon">◆</span>Adaptability &amp; quick learning</li>
+          <li><span class="trait-icon">◆</span>Strong communication skills</li>
+          <li><span class="trait-icon">◆</span>Team collaboration</li>
+        </ul>
+      </div>
+
+      <div class="panel panel--tilt-r beyond-panel">
+        <div class="panel-tape" aria-hidden="true"></div>
+        <h4 class="panel-heading">Interests</h4>
+        <ul class="trait-list">
+          <li><span class="trait-icon">✦</span>Flutter &amp; Mobile App Development</li>
+          <li><span class="trait-icon">✦</span>Artificial Intelligence &amp; Machine Learning</li>
+          <li><span class="trait-icon">✦</span>Full Stack Web Development</li>
+          <li><span class="trait-icon">✦</span>Open-source contribution</li>
+        </ul>
+      </div>
+
+      <div class="panel panel--tilt-l beyond-panel">
+        <div class="panel-tape" aria-hidden="true"></div>
+        <h4 class="panel-heading">Focus &amp; Goals</h4>
+        <ul class="trait-list">
+          <li><span class="trait-icon">●</span>Building production-ready Flutter apps</li>
+          <li><span class="trait-icon">●</span>AI API integrations (Gemini, ML)</li>
+          <li><span class="trait-icon">●</span>Shipping end-to-end full-stack projects</li>
+          <li><span class="trait-icon">●</span>Learning in public every day</li>
+        </ul>
+      </div>
+    </div>
+
+    <a href="#projects" class="chapter-next">Next: Chapter 3 — Projects <span class="arrow">&rarr;</span></a>
+  </section>
+
+  <!-- ============ CHAPTER 3 — PROJECTS ============ -->
+  <section class="chapter chapter--beige" id="projects">
+    <div class="halftone-layer halftone-layer--dark" aria-hidden="true"></div>
+
+    <div class="chapter-head">
+      <span class="chapter-stamp">03</span>
+      <h2 class="chapter-title">Projects</h2>
+      <p class="chapter-kicker">Every project is its own comic issue.</p>
+    </div>
+
+    <div class="project-grid">
+
+      <!-- ISSUE 01 -->
+      <article class="panel panel--tilt-l project-card">
+        <div class="panel-tape" aria-hidden="true"></div>
+        <header class="issue-strip">
+          <span class="issue-number">Issue №01</span>
+          <span class="issue-genre">Mobile &middot; POS</span>
+        </header>
+        <h3 class="issue-title">Smart POS</h3>
+        <p class="issue-tagline">Retail and ledger management, simplified.</p>
+        <ul class="issue-tech">
+          <li>Flutter</li><li>Dart</li><li>PDF Generation</li>
+        </ul>
+        <ul class="issue-bullets">
+          <li>Comprehensive Flutter POS application with complete sales tracking and inventory management.</li>
+          <li>Ledger accounting system for customer balances and vendor records with instant PDF export.</li>
+          <li>Clean, high-performance UI engineered for fast retail checkouts and reporting.</li>
+        </ul>
+        <div class="issue-links">
+          <a href="https://github.com/farhatsarwar155-design/flutter-projects/tree/master" target="_blank" rel="noopener">View Code &rarr;</a>
+        </div>
+      </article>
+
+      <!-- ISSUE 02 -->
+      <article class="panel panel--tilt-r project-card">
+        <div class="panel-tape" aria-hidden="true"></div>
+        <header class="issue-strip">
+          <span class="issue-number">Issue №02</span>
+          <span class="issue-genre">Mobile &middot; Real Estate</span>
+        </header>
+        <h3 class="issue-title">NestIQ</h3>
+        <p class="issue-tagline">Find the right property, pinpointed on the map.</p>
+        <ul class="issue-tech">
+          <li>Flutter</li><li>Dart</li><li>Google Maps API</li>
+        </ul>
+        <ul class="issue-bullets">
+          <li>Real estate mobile platform featuring interactive Google Maps pins and property discovery.</li>
+          <li>Rich filtering system by price, property type, location, and featured amenities.</li>
+          <li>Sleek modern UI architecture designed for smooth listings and property walkthroughs.</li>
+        </ul>
+        <div class="issue-links">
+          <a href="https://github.com/farhatsarwar155-design/flutter-projects/tree/master" target="_blank" rel="noopener">View Code &rarr;</a>
+        </div>
+      </article>
+
+      <!-- ISSUE 03 -->
+      <article class="panel panel--tilt-l project-card">
+        <div class="panel-tape" aria-hidden="true"></div>
+        <header class="issue-strip">
+          <span class="issue-number">Issue №03</span>
+          <span class="issue-genre">Mobile &middot; Healthcare</span>
+        </header>
+        <h3 class="issue-title">Doctor Assistant App</h3>
+        <p class="issue-tagline">Smart clinical sidekick for doctors on the move.</p>
+        <ul class="issue-tech">
+          <li>Flutter</li><li>Firebase</li><li>Dart</li>
+        </ul>
+        <ul class="issue-bullets">
+          <li>Complete patient management system with appointment scheduling and consultation records.</li>
+          <li>Firebase authentication and real-time database synchronization for clinic workflows.</li>
+          <li>Designed for doctors and clinic staff to manage daily schedules seamlessly.</li>
+        </ul>
+        <div class="issue-links">
+          <a href="https://github.com/farhatsarwar155-design/flutter-projects/tree/master" target="_blank" rel="noopener">View Code &rarr;</a>
+        </div>
+      </article>
+
+      <!-- ISSUE 04 -->
+      <article class="panel panel--tilt-r project-card">
+        <div class="panel-tape" aria-hidden="true"></div>
+        <header class="issue-strip">
+          <span class="issue-number">Issue №04</span>
+          <span class="issue-genre">Mobile &middot; AI</span>
+        </header>
+        <h3 class="issue-title">AI Chatbot App</h3>
+        <p class="issue-tagline">Gemini 1.5 Flash intelligence right in your pocket.</p>
+        <ul class="issue-tech">
+          <li>Flutter</li><li>Gemini API</li><li>REST APIs</li>
+        </ul>
+        <ul class="issue-bullets">
+          <li>Conversational AI app powered by the Google Gemini 1.5 Flash API.</li>
+          <li>Custom chat UI with formatted message bubbles, markdown support, and smooth stream handling.</li>
+          <li>REST API integration with session state management for multi-turn conversations.</li>
+        </ul>
+        <div class="issue-links">
+          <a href="https://github.com/farhatsarwar155-design/flutter-projects/tree/master" target="_blank" rel="noopener">View Code &rarr;</a>
+        </div>
+      </article>
+
+      <!-- ISSUE 05 -->
+      <article class="panel panel--tilt-l project-card">
+        <div class="panel-tape" aria-hidden="true"></div>
+        <header class="issue-strip">
+          <span class="issue-number">Issue №05</span>
+          <span class="issue-genre">Mobile &middot; Weather</span>
+        </header>
+        <h3 class="issue-title">SkyWatch Pro</h3>
+        <p class="issue-tagline">Live atmospheric insights from anywhere on Earth.</p>
+        <ul class="issue-tech">
+          <li>Flutter</li><li>OpenWeatherMap API</li><li>GPS</li>
+        </ul>
+        <ul class="issue-bullets">
+          <li>Live weather forecasting app integrating the OpenWeatherMap API and Geolocator.</li>
+          <li>GPS location detection, 7-day weather forecasts, and Air Quality Index (AQI) readings.</li>
+          <li>Dynamic weather UI displaying humidity, wind speeds, and temperature trends.</li>
+        </ul>
+        <div class="issue-links">
+          <a href="https://github.com/farhatsarwar155-design/flutter-projects/tree/master" target="_blank" rel="noopener">View Code &rarr;</a>
+        </div>
+      </article>
+
+      <!-- ISSUE 06 -->
+      <article class="panel panel--tilt-r project-card">
+        <div class="panel-tape" aria-hidden="true"></div>
+        <header class="issue-strip">
+          <span class="issue-number">Issue №06</span>
+          <span class="issue-genre">Mobile &middot; Education</span>
+        </header>
+        <h3 class="issue-title">Student Management System</h3>
+        <p class="issue-tagline">Academic profiles and grade tracking made effortless.</p>
+        <ul class="issue-tech">
+          <li>Flutter</li><li>Firebase</li><li>Dart</li>
+        </ul>
+        <ul class="issue-bullets">
+          <li>Full student portal managing course enrollments, profile data, and academic records.</li>
+          <li>Built-in CGPA tracking and calculator with historical semester progression.</li>
+          <li>Cloud-backed real-time database powered by Firebase.</li>
+        </ul>
+        <div class="issue-links">
+          <a href="https://github.com/farhatsarwar155-design/flutter-projects/tree/master" target="_blank" rel="noopener">View Code &rarr;</a>
+        </div>
+      </article>
+
+      <!-- ISSUE 07 -->
+      <article class="panel panel--tilt-l project-card">
+        <div class="panel-tape" aria-hidden="true"></div>
+        <header class="issue-strip">
+          <span class="issue-number">Issue №07</span>
+          <span class="issue-genre">Systems &middot; OS</span>
+        </header>
+        <h3 class="issue-title">Mini Shell Simulator</h3>
+        <p class="issue-tagline">Core operating system mechanics rebuilt from scratch.</p>
+        <ul class="issue-tech">
+          <li>C++</li><li>Operating Systems</li><li>CLI</li>
+        </ul>
+        <ul class="issue-bullets">
+          <li>CLI shell simulator mimicking core OS system calls, process creation, and execution.</li>
+          <li>Handles command parsing, file redirection, piping, and built-in process controls.</li>
+          <li>Developed as a deep architectural dive into operating systems concepts.</li>
+        </ul>
+      </article>
+
+      <!-- ISSUE 08 -->
+      <article class="panel panel--tilt-r project-card">
+        <div class="panel-tape" aria-hidden="true"></div>
+        <header class="issue-strip">
+          <span class="issue-number">Issue №08</span>
+          <span class="issue-genre">Systems &middot; Dashboard</span>
+        </header>
+        <h3 class="issue-title">Network Monitor</h3>
+        <p class="issue-tagline">Live packet traffic with high-throughput ring buffers.</p>
+        <ul class="issue-tech">
+          <li>React</li><li>Systems Programming</li><li>Data Structures</li>
+        </ul>
+        <ul class="issue-bullets">
+          <li>Live traffic dashboard built with high-throughput circular ring buffer architecture.</li>
+          <li>Real-time packet stream replay, frame-skip optimization, and active process monitoring.</li>
+          <li>High-performance UI rendering streaming data without dropped frames.</li>
+        </ul>
+      </article>
+
+      <!-- ISSUE 09 -->
+      <article class="panel panel--tilt-l project-card">
+        <div class="panel-tape" aria-hidden="true"></div>
+        <header class="issue-strip">
+          <span class="issue-number">Issue №09</span>
+          <span class="issue-genre">Web &middot; Portfolio</span>
+        </header>
+        <h3 class="issue-title">Personal Portfolio Website</h3>
+        <p class="issue-tagline">The comic-book adventure you're reading right now.</p>
+        <ul class="issue-tech">
+          <li>HTML5</li><li>CSS3</li><li>JavaScript</li>
+        </ul>
+        <ul class="issue-bullets">
+          <li>Fully responsive, hand-crafted comic developer portfolio with physical tape panels and drop caps.</li>
+          <li>Scroll-triggered chapter animations, interactive filter tabs, and progress rail.</li>
+          <li>Asynchronous Formspree contact form with no heavy backend dependencies.</li>
+        </ul>
+        <div class="issue-links">
+          <a href="https://github.com/farhatsarwar155-design" target="_blank" rel="noopener">View GitHub &rarr;</a>
+        </div>
+      </article>
+
+      <!-- ISSUE 10 -->
+      <article class="panel panel--tilt-r project-card">
+        <div class="panel-tape" aria-hidden="true"></div>
+        <header class="issue-strip">
+          <span class="issue-number">Issue №10</span>
+          <span class="issue-genre">Web &middot; Academic</span>
+        </header>
+        <h3 class="issue-title">Student Feedback Website</h3>
+        <p class="issue-tagline">Interactive survey platform for academic feedback.</p>
+        <ul class="issue-tech">
+          <li>HTML</li><li>CSS</li><li>JavaScript</li>
+        </ul>
+        <ul class="issue-bullets">
+          <li>Interactive platform for academic feedback collection and structured data review.</li>
+          <li>Clean form validation UX with dynamic questions and category filters.</li>
+          <li>Responsive layout optimized for both desktop and mobile browsers.</li>
+        </ul>
+      </article>
+
+      <!-- ISSUE 11 -->
+      <article class="panel panel--tilt-l project-card">
+        <div class="panel-tape" aria-hidden="true"></div>
+        <header class="issue-strip">
+          <span class="issue-number">Issue №11</span>
+          <span class="issue-genre">Web &middot; Portal</span>
+        </header>
+        <h3 class="issue-title">Graded Lab Activities Website</h3>
+        <p class="issue-tagline">Centralized lab submission portal for students.</p>
+        <ul class="issue-tech">
+          <li>HTML</li><li>CSS</li><li>JavaScript</li>
+        </ul>
+        <ul class="issue-bullets">
+          <li>Portal for organizing, grading, and tracking university student lab submissions.</li>
+          <li>Structured navigation for lab modules, submission status, and feedback notes.</li>
+          <li>Lightweight and accessible design built for straightforward student workflows.</li>
+        </ul>
+      </article>
+
+      <!-- ISSUE 12 -->
+      <article class="panel panel--tilt-r project-card">
+        <div class="panel-tape" aria-hidden="true"></div>
+        <header class="issue-strip">
+          <span class="issue-number">Issue №12</span>
+          <span class="issue-genre">Internship &middot; Project</span>
+        </header>
+        <h3 class="issue-title">iSkills Internship Project</h3>
+        <p class="issue-tagline">Hands-on delivery under real-world requirements.</p>
+        <ul class="issue-tech">
+          <li>Full Stack</li><li>Web</li><li>Internship</li>
+        </ul>
+        <ul class="issue-bullets">
+          <li>Real-world project completed during the intensive iSkills Internship programme.</li>
+          <li>Built to professional software standards with version control and clean code principles.</li>
+          <li>End-to-end implementation with high quality and on-time milestone delivery.</li>
+        </ul>
+        <div class="issue-links">
+          <a href="https://github.com/farhatsarwar155-design/iskills-internship" target="_blank" rel="noopener">View on GitHub &rarr;</a>
+        </div>
+      </article>
+
+    </div>
+
+    <!-- Additional Projects Vault -->
+    <div class="panel panel--tilt-l vault-panel">
+      <div class="panel-tape" aria-hidden="true"></div>
+      <h3 class="panel-heading">Bonus Issues from the Vault</h3>
+      <p class="issue-tagline">More projects built along the journey:</p>
+      <div class="vault-chips">
+        <span class="vault-chip">Notes App</span>
+        <span class="vault-chip">BMI Calculator Pro</span>
+        <span class="vault-chip">CGPA Calculator</span>
+        <span class="vault-chip">Task Manager App</span>
+        <span class="vault-chip">To-Do App</span>
+        <span class="vault-chip">MiniCommerce</span>
+        <span class="vault-chip">CV Maker App</span>
+        <span class="vault-chip">Dice Guessing Game</span>
+        <span class="vault-chip">Color Mix &amp; Match Game</span>
+      </div>
+      <a href="https://github.com/farhatsarwar155-design/flutter-projects/tree/master" class="btn-begin btn-begin--sm" target="_blank" rel="noopener">
+        Explore all on GitHub <span class="arrow">&rarr;</span>
+      </a>
+    </div>
+
+    <a href="#timeline" class="chapter-next">Next: Chapter 4 — Timeline <span class="arrow">&rarr;</span></a>
+  </section>
+
+  <!-- ============ CHAPTER 4 — TIMELINE ============ -->
+  <section class="chapter chapter--wine" id="timeline">
+    <div class="halftone-layer" aria-hidden="true"></div>
+
+    <div class="chapter-head">
+      <span class="chapter-stamp">04</span>
+      <h2 class="chapter-title">Timeline</h2>
+      <p class="chapter-kicker">Presenting my education and experience as a comic timeline.</p>
+    </div>
+
+    <div class="timeline-track">
+      <div class="timeline-line" aria-hidden="true"></div>
+
+      <!-- Experience -->
+      <div class="timeline-entry timeline-entry--left">
+        <div class="timeline-node" aria-hidden="true"></div>
+        <div class="panel timeline-card">
+          <div class="panel-tape" aria-hidden="true"></div>
+          <span class="timeline-tag timeline-tag--exp">Experience</span>
+          <h3 class="timeline-role">iSkills Internship</h3>
+          <p class="timeline-org">iSkills Programme &middot; Hands-on Internship</p>
+          <p class="timeline-dates">2025</p>
+          <p class="timeline-desc">Hands-on, project-based internship tackling real-world briefs with professional software engineering standards.</p>
+          <ul class="issue-tech">
+            <li>Full Stack</li><li>Web Development</li><li>Git</li><li>Problem Solving</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Education: BS CS -->
+      <div class="timeline-entry timeline-entry--right">
+        <div class="timeline-node" aria-hidden="true"></div>
+        <div class="panel timeline-card">
+          <div class="panel-tape" aria-hidden="true"></div>
+          <span class="timeline-tag timeline-tag--edu">Education</span>
+          <h3 class="timeline-role">BS Computer Science</h3>
+          <p class="timeline-org">COMSATS University Islamabad, Vehari Campus</p>
+          <p class="timeline-dates">2024 &ndash; 2028 (Expected)</p>
+          <p class="timeline-desc">The main arc where everything began. Focus: Flutter Development, Artificial Intelligence, and Full Stack Engineering.</p>
+          <ul class="issue-tech">
+            <li>Programming Fundamentals</li>
+            <li>Data Structures</li>
+            <li>OOP</li>
+            <li>Operating Systems</li>
+            <li>Database Systems</li>
+            <li>Mobile App Development</li>
+            <li>Artificial Intelligence</li>
+            <li>Software Engineering</li>
+          </ul>
+        </div>
+      </div>
+
+    </div>
+
+    <a href="#resume" class="chapter-next">Next: Chapter 5 — Resume <span class="arrow">&rarr;</span></a>
+  </section>
+
+  <!-- ============ CHAPTER 5 — RESUME ============ -->
+  <section class="chapter chapter--beige" id="resume">
+    <div class="halftone-layer halftone-layer--dark" aria-hidden="true"></div>
+
+    <div class="chapter-head">
+      <span class="chapter-stamp">05</span>
+      <h2 class="chapter-title">Resume</h2>
+      <p class="chapter-kicker">The condensed edition — for recruiters in a hurry.</p>
+    </div>
+
+    <div class="resume-wrap">
+      <div class="panel resume-card">
+        <div class="panel-tape" aria-hidden="true"></div>
+
+        <div class="resume-top">
+          <div>
+            <h3 class="resume-name">FARHAT</h3>
+            <p class="resume-role">Computer Science Student &middot; Flutter Developer &middot; AI Enthusiast</p>
+          </div>
+
+          <div class="resume-actions">
+            <button class="btn-begin btn-begin--sm" id="previewResumeBtn" aria-label="Preview full resume document">
+              Preview Resume <span class="arrow">&rarr;</span>
+            </button>
+            <a class="btn-begin btn-begin--sm resume-download" href="assets/resume.png" download="Farhat_Sarwar_Resume.png">
+              Download Resume <span class="arrow">&darr;</span>
+            </a>
+          </div>
+        </div>
+
+        <div class="resume-profile-box">
+          <p>
+            <strong>Profile:</strong> Motivated Computer Science student at COMSATS University Islamabad (Vehari Campus) with hands-on experience building 20+ Flutter mobile applications. Skilled in Google Maps API, Firebase, payment gateway integration, and PDF generation. Passionate about Flutter development, full-stack engineering, and artificial intelligence. Actively seeking internship opportunities to contribute to innovative tech projects.
+          </p>
+        </div>
+
+        <p class="resume-contact">
+          Vehari, Pakistan &middot;
+          <a href="mailto:farhatsarwar.155@gmail.com">farhatsarwar.155@gmail.com</a> &middot;
+          <a href="tel:+923262737155">+92-326-2737155</a> &middot;
+          <a href="https://www.linkedin.com/in/farhat-muhammad-sarwar-391a96411/" target="_blank" rel="noopener">LinkedIn</a> &middot;
+          <a href="https://github.com/farhatsarwar155-design/flutter-projects/tree/master" target="_blank" rel="noopener">GitHub: flutter-projects</a>
+        </p>
+
+        <div class="resume-grid">
+          <div class="resume-block">
+            <h4 class="panel-heading">Education</h4>
+            <p class="resume-line"><strong>BS Computer Science</strong><br>COMSATS University Islamabad, Vehari Campus</p>
+            <p class="resume-sub">2024 &ndash; 2028 (Expected) &middot; Focus: Flutter &middot; AI &middot; Full Stack</p>
+          </div>
+
+          <div class="resume-block">
+            <h4 class="panel-heading">Experience</h4>
+            <p class="resume-line"><strong>iSkills Internship</strong><br>iSkills Programme &middot; 2025</p>
+            <p class="resume-sub">Hands-on project-based engineering internship</p>
+          </div>
+
+          <div class="resume-block resume-block--full">
+            <h4 class="panel-heading">Key Skills</h4>
+            <ul class="issue-tech">
+              <li>Flutter &amp; Dart</li><li>Python</li><li>JavaScript</li><li>HTML &amp; CSS</li>
+              <li>Node.js</li><li>Firebase</li><li>MySQL &amp; MongoDB</li><li>REST APIs</li>
+              <li>Google Maps API</li><li>Payment Gateways</li><li>Gemini API</li><li>PDF Generation</li>
+            </ul>
+          </div>
+
+          <div class="resume-block resume-block--full">
+            <h4 class="panel-heading">Featured Projects</h4>
+            <p class="resume-line">Smart POS &middot; NestIQ &middot; AI Chatbot App &middot; Doctor Assistant App &middot; SkyWatch Pro</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <a href="#contact" class="chapter-next">Next: Chapter 6 — Contact <span class="arrow">&rarr;</span></a>
+  </section>
+
+  <!-- ============ CHAPTER 6 — CONTACT ============ -->
+  <section class="chapter chapter--wine" id="contact">
+    <div class="halftone-layer" aria-hidden="true"></div>
+
+    <div class="chapter-head">
+      <span class="chapter-stamp">06</span>
+      <h2 class="chapter-title">Contact</h2>
+      <p class="chapter-kicker">Every story needs a way to reach the author.</p>
+    </div>
+
+    <div class="contact-grid">
+
+      <div class="panel contact-form-panel">
+        <div class="panel-tape" aria-hidden="true"></div>
+        <h3 class="panel-heading">Send a Message</h3>
+
+        <form class="contact-form" id="contactForm" action="https://formspree.io/f/your-form-id" method="POST">
+          <label class="form-field">
+            <span>Name</span>
+            <input type="text" name="name" placeholder="Your name" required>
+          </label>
+          <label class="form-field">
+            <span>Email</span>
+            <input type="email" name="email" placeholder="your@email.com" required>
+          </label>
+          <label class="form-field">
+            <span>Message</span>
+            <textarea name="message" rows="5" placeholder="What's on your mind?" required></textarea>
+          </label>
+          <button type="submit" class="btn-begin btn-begin--sm" id="contactSubmit">
+            Send <span class="arrow">&rarr;</span>
+          </button>
+          <p class="form-status" id="formStatus" role="status"></p>
+        </form>
+      </div>
+
+      <div class="panel contact-links-panel">
+        <div class="panel-tape" aria-hidden="true"></div>
+        <h3 class="panel-heading">Find Me Elsewhere</h3>
+        <ul class="contact-links">
+          <li>
+            <a href="mailto:farhatsarwar.155@gmail.com">
+              <span class="contact-icon">&#9993;</span> farhatsarwar.155@gmail.com
+            </a>
+          </li>
+          <li>
+            <a href="tel:+923262737155">
+              <span class="contact-icon">&#9742;</span> +92-326-2737155
+            </a>
+          </li>
+          <li>
+            <a href="https://www.linkedin.com/in/farhat-muhammad-sarwar-391a96411/" target="_blank" rel="noopener noreferrer">
+              <span class="contact-icon">in</span> LinkedIn Profile
+            </a>
+          </li>
+          <li>
+            <a href="https://github.com/farhatsarwar155-design" target="_blank" rel="noopener noreferrer">
+              <span class="contact-icon">&lt;/&gt;</span> GitHub: farhatsarwar155-design
+            </a>
+          </li>
+          <li>
+            <a href="#cover">
+              <span class="contact-icon">&#9679;</span> Location: Vehari, Pakistan
+            </a>
+          </li>
+        </ul>
+
+        <div class="bubble bubble--float bubble--contact in-view">
+          <p>Thanks for reading all the way here!</p>
+        </div>
+      </div>
+
+    </div>
+
+    <p class="the-end">— The End, for now —</p>
+  </section>
+
+</main>
+
+<!-- Resume Preview Modal -->
+<div class="resume-modal" id="resumeModal" role="dialog" aria-modal="true" aria-label="Resume Preview" aria-hidden="true">
+  <div class="resume-modal-panel">
+    <div class="resume-modal-header">
+      <span class="modal-badge">OFFICIAL RESUME · FARHAT</span>
+      <button class="resume-modal-close" id="closeResumeModal" aria-label="Close resume preview">✕</button>
+    </div>
+    <div class="resume-modal-body">
+      <img src="assets/resume.png" alt="Farhat Sarwar Developer Resume" onerror="this.src='images/resume.png'">
+    </div>
+    <div class="resume-modal-footer">
+      <a class="btn-begin btn-begin--sm" href="assets/resume.png" download="Farhat_Sarwar_Resume.png">
+        Download Resume <span class="arrow">&darr;</span>
+      </a>
+    </div>
+  </div>
+</div>
+
+<!-- Secret bonus panel — Easter egg, press "C" anywhere on the page -->
+<div class="secret-page" id="secretPage" aria-hidden="true">
+  <div class="secret-inner">
+    <p class="secret-stamp">BONUS PANEL - UNLOCKED</p>
+    <p>You found the hidden page. That's the kind of curiosity I put into every project. ✦</p>
+    <button class="btn-begin btn-begin--sm" id="closeSecret">Close</button>
+  </div>
+</div>
+
+<!-- Floating Back to Top Button -->
+<button class="back-to-top" id="backToTop" aria-label="Scroll back to top">
+  ↑
+</button>
+
+<script src="js/main.js"></script>
+</body>
+</html>
