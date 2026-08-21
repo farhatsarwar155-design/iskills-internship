@@ -387,7 +387,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     switch (cmd) {
       case 'help':
-        addTermLine('Available commands: <span class="term-highlight">skills</span>, <span class="term-highlight">projects</span>, <span class="term-highlight">stats</span>, <span class="term-highlight">about</span>, <span class="term-highlight">internship</span>, <span class="term-highlight">contact</span>, <span class="term-highlight">hire</span>, <span class="term-highlight">clear</span>');
+        addTermLine('Available commands: <span class="term-highlight">help</span>, <span class="term-highlight">skills</span>, <span class="term-highlight">projects</span>, <span class="term-highlight">internship</span>, <span class="term-highlight">about</span>, <span class="term-highlight">hire</span>, <span class="term-highlight">clear</span>');
         break;
       case 'skills':
         addTermLine('⚡ Core Superpowers:');
@@ -412,8 +412,12 @@ document.addEventListener('DOMContentLoaded', () => {
         addTermLine('Passionate about mobile architectures, AI integration, and production systems.');
         break;
       case 'internship':
-        addTermLine('🎓 Full Stack Internship @ iSkills (Software House, Multan, Pakistan)');
-        addTermLine('Engineered InternLynk, Bizloom ERP, and Huddlr App.');
+        addTermLine('<strong>iSkills &mdash; Software House, Multan, Pakistan</strong>');
+        addTermLine('<strong>Role:</strong> Full Stack Development Intern | 2025');
+        addTermLine('&rarr; Hands-on, project-based internship delivering a real-world Full Stack web project.');
+        addTermLine('&rarr; Followed professional engineering standards + Git version control.');
+        addTermLine('&rarr; GitHub: <a href="https://github.com/farhatsarwar155-design/iskills-internship" target="_blank" style="color:#96BFE5; text-decoration:underline;">github.com/farhatsarwar155-design/iskills-internship</a>');
+        addTermLine('<em>Type \'internship\' anytime to see this again.</em>');
         break;
       case 'contact':
       case 'hire':
